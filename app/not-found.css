@@ -1,0 +1,401 @@
+/* app/not-found.css - Estilos específicos para la página 404 */
+
+/* Variables de color médicas */
+:root {
+  --medical-blue: #0284c7;
+  --medical-light-blue: #e0f2fe;
+  --medical-dark-blue: #0369a1;
+  --medical-green: #10b981;
+  --medical-light-green: #d1fae5;
+  --medical-text: #0f172a;
+  --medical-text-light: #475569;
+  --medical-bg: #f0f9ff;
+  --medical-white: #ffffff;
+  --medical-border: #e2e8f0;
+}
+
+/* Reset y base */
+.medical-404 {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: linear-gradient(135deg, var(--medical-bg) 0%, var(--medical-white) 100%);
+  min-height: 100vh;
+  color: var(--medical-text);
+}
+
+/* Contenedor principal */
+.medical-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+/* Header médico */
+.medical-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 3rem;
+  padding: 1rem;
+  background: var(--medical-white);
+  border-radius: 1rem;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.1);
+  border: 1px solid var(--medical-border);
+}
+
+.medical-logo {
+  width: 3rem;
+  height: 3rem;
+  background: linear-gradient(135deg, var(--medical-blue), var(--medical-dark-blue));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+}
+
+.medical-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--medical-blue);
+  margin: 0;
+}
+
+.medical-subtitle {
+  font-size: 0.875rem;
+  color: var(--medical-text-light);
+  margin: 0.25rem 0 0 0;
+}
+
+/* Sección principal */
+.medical-main {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 3rem;
+}
+
+@media (min-width: 1024px) {
+  .medical-main {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+}
+
+/* Error 404 grande */
+.error-404 {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.error-number {
+  font-size: 8rem;
+  font-weight: 900;
+  color: var(--medical-blue);
+  line-height: 1;
+  margin: 0;
+  text-shadow: 0 4px 20px rgba(2, 132, 199, 0.2);
+}
+
+.error-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--medical-text);
+  margin: 1rem 0;
+}
+
+.error-description {
+  font-size: 1.125rem;
+  color: var(--medical-text-light);
+  line-height: 1.6;
+  max-width: 36rem;
+  margin: 0 auto 2rem;
+}
+
+/* Tarjeta médica */
+.medical-card {
+  background: var(--medical-white);
+  border-radius: 1.5rem;
+  padding: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--medical-border);
+  margin-bottom: 2rem;
+}
+
+.card-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--medical-blue);
+  margin: 0 0 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.card-title::before {
+  content: "🩺";
+  font-size: 1.5rem;
+}
+
+.card-subtitle {
+  font-size: 1rem;
+  color: var(--medical-text-light);
+  margin: 0 0 2rem 0;
+}
+
+/* Grid de especialidades */
+.specialties-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.specialty-item {
+  background: var(--medical-light-blue);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  border-left: 4px solid var(--medical-blue);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.specialty-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.15);
+}
+
+.specialty-icon {
+  font-size: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.specialty-name {
+  font-weight: 600;
+  color: var(--medical-blue);
+  margin: 0 0 0.25rem 0;
+  font-size: 1rem;
+}
+
+.specialty-desc {
+  font-size: 0.875rem;
+  color: var(--medical-text-light);
+  margin: 0;
+}
+
+/* Emergencia */
+.emergency-box {
+  background: linear-gradient(135deg, #fef2f2, #fee2e2);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  border-left: 4px solid #dc2626;
+  margin-bottom: 2rem;
+}
+
+.emergency-title {
+  font-weight: 700;
+  color: #dc2626;
+  margin: 0 0 0.5rem 0;
+  font-size: 1.125rem;
+}
+
+.emergency-subtitle {
+  font-size: 0.875rem;
+  color: var(--medical-text-light);
+  margin: 0 0 1rem 0;
+}
+
+.emergency-phone {
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--medical-text);
+  margin: 0.5rem 0;
+  letter-spacing: -0.5px;
+}
+
+.emergency-link {
+  display: inline-flex;
+  align-items: center;
+  color: var(--medical-blue);
+  font-weight: 600;
+  text-decoration: none;
+  margin-top: 0.5rem;
+}
+
+.emergency-link::after {
+  content: "→";
+  margin-left: 0.5rem;
+  transition: transform 0.2s ease;
+}
+
+.emergency-link:hover::after {
+  transform: translateX(4px);
+}
+
+/* Enlaces rápidos */
+.quick-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.quick-link {
+  background: var(--medical-white);
+  border: 1px solid var(--medical-border);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  color: var(--medical-text);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.quick-link:hover {
+  background: var(--medical-light-blue);
+  border-color: var(--medical-blue);
+  transform: translateY(-1px);
+}
+
+/* Botones principales */
+.action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--medical-blue), var(--medical-dark-blue));
+  color: white;
+  padding: 1rem 2rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(2, 132, 199, 0.3);
+}
+
+.btn-secondary {
+  background: var(--medical-white);
+  color: var(--medical-text);
+  padding: 1rem 2rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  border: 1px solid var(--medical-border);
+}
+
+.btn-secondary:hover {
+  background: var(--medical-light-blue);
+  border-color: var(--medical-blue);
+  transform: translateY(-2px);
+}
+
+/* Footer médico */
+.medical-footer {
+  margin-top: 4rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--medical-border);
+  text-align: center;
+}
+
+.footer-info {
+  font-size: 0.875rem;
+  color: var(--medical-text-light);
+  margin: 0.5rem 0;
+}
+
+.footer-address {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin: 0.25rem 0;
+}
+
+.footer-copyright {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin: 1rem 0 0 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .error-number {
+    font-size: 6rem;
+  }
+  
+  .error-title {
+    font-size: 2rem;
+  }
+  
+  .medical-card {
+    padding: 1.5rem;
+  }
+  
+  .specialties-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+  }
+  
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadein {
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+/* Decoraciones */
+.medical-decoration {
+  position: absolute;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.decoration-1 {
+  top: 10%;
+  left: 5%;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(2, 132, 199, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.decoration-2 {
+  bottom: 10%;
+  right: 5%;
+  width: 150px;
+  height: 150px;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+}
