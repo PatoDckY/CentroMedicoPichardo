@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { db } from '@/app/lib/db';
 import { usuarios } from '@/app/lib/schema';
 import { eq } from 'drizzle-orm';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import * as jose from 'jose'; 
 
 export async function POST(req: Request) {

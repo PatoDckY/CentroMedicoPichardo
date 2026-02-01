@@ -2,14 +2,11 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  // 1. NO APLICAR CSP/MIDDLEWARE A RUTAS API
-  if (request.nextUrl.pathname.startsWith('/api/')) {
-    return NextResponse.next();
-  }
-  
-  // 2. Solo aplicar CSP a rutas no-API
+  // 1. Generar Nonce único
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
   
+  // 2. Definir la política CSP Estricta (Sin unsafe-inline)
+  // Nota: Agregamos 'https:' y 'data:' en font-src e img-src para evitar bloqueos de recursos externos
   const cspHeader = `
     default-src 'self';
     script-src 'self' 'nonce-${nonce}' 'strict-dynamic';
@@ -24,20 +21,24 @@ export function middleware(request: NextRequest) {
     upgrade-insecure-requests;
   `;
 
+  // Limpiar espacios
   const contentSecurityPolicyHeaderValue = cspHeader
     .replace(/\s{2,}/g, ' ')
     .trim();
 
+  // 3. Preparar los headers de la solicitud para pasar el Nonce a Next.js
   const requestHeaders = new Headers(request.headers);
-  requestHeaders.set('x-nonce', nonce);
+  requestHeaders.set('x-nonce', nonce); // 👈 CLAVE: Pasamos el nonce al layout
   requestHeaders.set('Content-Security-Policy', contentSecurityPolicyHeaderValue);
 
+  // 4. Crear respuesta con los nuevos headers de solicitud
   const response = NextResponse.next({
     request: {
       headers: requestHeaders,
     },
   });
 
+  // 5. Configurar headers de seguridad en la respuesta final (Para el navegador)
   response.headers.set('Content-Security-Policy', contentSecurityPolicyHeaderValue);
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('X-Frame-Options', 'DENY');
@@ -53,6 +54,6 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 };

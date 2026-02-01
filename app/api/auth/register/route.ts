@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { db } from '@/app/lib/db'; // 👈 Tu conexión Drizzle
 import { usuarios, roles } from '@/app/lib/schema'; // 👈 Tus tablas
 import { eq } from 'drizzle-orm'; // Operador "igual"
