@@ -1,5 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    experimental: {
+    serverComponentsExternalPackages: ['postgres', 'drizzle-orm'],
+  },
+  // Solo si usas API routes o server actions
+  serverRuntimeConfig: {
+    dbConnectionString: process.env.DATABASE_URL,
+  },
   // Activa esto si usas imágenes externas (Google, Facebook, etc)
   images: {
     remotePatterns: [
