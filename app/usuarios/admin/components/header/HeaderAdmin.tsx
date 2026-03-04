@@ -6,7 +6,7 @@ import Image from "next/image";
 import { 
   Menu, X, ShieldCheck, LayoutDashboard, 
   Globe, Stethoscope, GraduationCap, FileText, Settings, 
-  Users
+  Users, Database
 } from "lucide-react";
 import ProfileMenuAdmin from "@/app/usuarios/client/components/Profile/ProfileMenu"; 
 import "../../styles/header/HeaderAdmin.css"; 
@@ -66,6 +66,10 @@ export default function HeaderAdmin() {
             
             <Link href="/usuarios/admin/screens/Dashboard" className="nav-link">
                <LayoutDashboard size={18} /> Dashboard
+            </Link>
+
+            <Link href="/usuarios/admin/screens/Respaldo" className="nav-link">
+               <Database size={18} /> Respaldo
             </Link>
 
             {/* Gestión de Contenido (Home, Nosotros, Servicios) */}
