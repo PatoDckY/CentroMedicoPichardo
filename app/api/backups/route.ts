@@ -19,7 +19,7 @@ export async function GET() {
 
     const backups = result.rows.map(row => ({
       id: row.id.toString(),
-      fecha: new Date(row.fecha).toLocaleString('es-ES'),
+      fecha: row.fecha.toISOString(),
       tipo: row.tipo,
       tamaño: row.tamaño || 'N/A',
       estado: row.estado,
@@ -76,7 +76,7 @@ export async function POST(request: Request) {
     const tamañoKB = (Buffer.byteLength(sqlDump, 'utf8') / 1024).toFixed(2) + ' KB';
 
     const insertRes = await pool.query(
-      `INSERT INTO backups (tipo, tamaño, archivo_path) VALUES ($1, $2, $3) RETURNING id`,
+      `INSERT INTO backups (tipo, tamaño, archivo_url) VALUES ($1, $2, $3) RETURNING id`,
       [tipo, tamañoKB, `backups/${fileName}`]
     );
     const backupId = insertRes.rows[0].id;

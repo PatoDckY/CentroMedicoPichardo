@@ -51,6 +51,17 @@ export default function RespaldoComponente() {
     }
   };
 
+  const formatearFecha = (fechaIso: string) => {
+    return new Date(fechaIso).toLocaleString('es-ES', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+  };
+
   const cargarHistorial = async () => {
     try {
       const res = await fetch('/api/backups');
@@ -58,7 +69,7 @@ export default function RespaldoComponente() {
       const data = await res.json();
       setHistorial(data.backups);
       if (data.backups.length > 0) {
-        setUltimoBackup(data.backups[0].fecha);
+        setUltimoBackup(formatearFecha(data.backups[0].fecha));
       }
     } catch (err) {
       console.error('Error cargando historial:', err);
@@ -75,7 +86,6 @@ export default function RespaldoComponente() {
     }, 500);
 
     try {
-      // 1. CORREGIDO: usar /api/backups en lugar de /api/backups/generar
       const res = await fetch('/api/backups', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -85,48 +95,40 @@ export default function RespaldoComponente() {
       clearInterval(intervalo);
 
       if (!res.ok) {
-        let errorMsg = 'Error al generar backup';
+        // Manejar errores (pueden ser JSON o texto)
         const contentType = res.headers.get('content-type');
         if (contentType && contentType.includes('application/json')) {
           const errorData = await res.json();
-          errorMsg = errorData.error || errorMsg;
+          throw new Error(errorData.error || `Error ${res.status}`);
         } else {
-          errorMsg = await res.text();
+          const text = await res.text();
+          throw new Error(`Error ${res.status}: ${text.substring(0, 100)}`);
         }
-        throw new Error(errorMsg);
       }
 
-      // 2. Verificar si la respuesta es un archivo (blob)
-      const contentType = res.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        // Caso inesperado: el backend devolvió JSON (probable error)
-        const data = await res.json();
-        if (data.error) throw new Error(data.error);
-      } else {
-        // Debe ser un archivo SQL
-        const blob = await res.blob();
-        const url = window.URL.createObjectURL(blob);
+      // Respuesta exitosa: debe ser el archivo SQL
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
 
-        // Intentar obtener el nombre del archivo de la cabecera Content-Disposition
-        const contentDisposition = res.headers.get('Content-Disposition');
-        let filename = `backup-${new Date().toISOString().slice(0, 10)}.sql`;
-        if (contentDisposition) {
-          const match = contentDisposition.match(/filename="?([^"]+)"?/);
-          if (match) filename = match[1];
-        }
-
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(url);
-
-        // 3. Recargar historial para incluir el nuevo backup
-        await cargarHistorial();
-        setProgreso(100);
+      // Obtener nombre del archivo de la cabecera Content-Disposition
+      const contentDisposition = res.headers.get('Content-Disposition');
+      let filename = `backup-${new Date().toISOString().slice(0, 10)}.sql`;
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="?([^"]+)"?/);
+        if (match) filename = match[1];
       }
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+
+      // Recargar historial para mostrar el nuevo backup
+      await cargarHistorial();
+      setProgreso(100);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -136,8 +138,12 @@ export default function RespaldoComponente() {
     }
   };
 
-  const descargarBackup = async (id: string) => {
+  const descargarBackup = async (id: string, archivoUrl?: string) => {
     try {
+      if (archivoUrl) {
+        window.open(archivoUrl, '_blank');
+        return;
+      }
       const res = await fetch(`/api/backups/${id}`);
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({ error: 'Error desconocido' }));
@@ -148,7 +154,6 @@ export default function RespaldoComponente() {
       const a = document.createElement('a');
       a.href = url;
       a.download = `backup-${id}.sql`;
-      document.body.appendChild(a);
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
@@ -165,7 +170,6 @@ export default function RespaldoComponente() {
         const errorData = await res.json().catch(() => ({ error: 'Error desconocido' }));
         throw new Error(errorData.error || `Error ${res.status}`);
       }
-      // Si la respuesta es exitosa, actualizamos el estado local
       setHistorial(prev => prev.filter(b => b.id !== id));
     } catch (err: any) {
       alert(`Error al eliminar: ${err.message}`);
@@ -308,7 +312,7 @@ export default function RespaldoComponente() {
                 <tbody>
                   {historial.map(item => (
                     <tr key={item.id}>
-                      <td>{item.fecha}</td>
+                      <td>{formatearFecha(item.fecha)}</td>
                       <td>
                         <span className={`${styles.badge} ${item.tipo === 'completo' ? styles.badgeBlue : styles.badgeGray}`}>
                           {item.tipo}
@@ -324,10 +328,18 @@ export default function RespaldoComponente() {
                       </td>
                       <td>
                         <div className={styles.actions}>
-                          <button onClick={() => descargarBackup(item.id)} className={styles.actionBtn} title="Descargar">
+                          <button
+                            onClick={() => descargarBackup(item.id, item.archivo)}
+                            className={styles.actionBtn}
+                            title="Descargar"
+                          >
                             <Download size={16} />
                           </button>
-                          <button onClick={() => eliminarBackup(item.id)} className={styles.actionBtn} title="Eliminar">
+                          <button
+                            onClick={() => eliminarBackup(item.id)}
+                            className={styles.actionBtn}
+                            title="Eliminar"
+                          >
                             <XCircle size={16} />
                           </button>
                         </div>

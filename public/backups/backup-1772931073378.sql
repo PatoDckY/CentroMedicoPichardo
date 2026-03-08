@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict F1DiaD7QYdn8iFUdnmheyhN0LibNNGmP7CmfhZILsBNIt9M2nOLj6thYfqmsnvI
+\restrict oWesSfwUL6gPCBn5scedJedQyVf0n503UgKXAzdeUVj5b3R2RVhQKK2qRgJehvo
 
 -- Dumped from database version 17.8 (6108b59)
 -- Dumped by pg_dump version 18.1
@@ -109,7 +109,7 @@ CREATE TABLE public.backups (
     fecha timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     tipo character varying(20) NOT NULL,
     "tamaño" character varying(20),
-    archivo_path text,
+    archivo_url text,
     estado character varying(20) DEFAULT 'exitoso'::character varying
 );
 
@@ -463,7 +463,7 @@ COPY public.academia_infantil (id_guia, titulo_guia, descripcion_corta, id_autor
 -- Data for Name: backups; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-COPY public.backups (id, fecha, tipo, "tamaño", archivo_path, estado) FROM stdin;
+COPY public.backups (id, fecha, tipo, "tamaño", archivo_url, estado) FROM stdin;
 \.
 
 
@@ -527,11 +527,11 @@ COPY public.servicios (id_servicio, titulo_servicio, descripcion, ubicacion, url
 COPY public.usuarios (id, nombre, "apellidoPaterno", "apellidoMaterno", edad, sexo, telefono, correo, contrasena, rol_id, reset_token, reset_token_expiry, intentos_fallidos, bloqueado_hasta, version_token, mfa_habilitado, secreto_mfa) FROM stdin;
 1	Admin	Sistema	Principal	30	Masculino	0000000000	admin@test.com	$2b$10$Pj/8.W.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0	2	\N	\N	0	\N	1	f	\N
 13	Jesus	Fernandez	Fernandez	20	masculino	7713039166	jesushfh123@gmail.com	$2b$10$e4daBPIwI6SeF7BAlAKutuMKyb3cSLs6XNYrOJvdd0l3Xde0J7y.2	2	\N	\N	0	\N	1	f	\N
-11	Jesus	Fernandez	Hernandez	20	masculino	7713039166	jesushfernandezh@gmail.com	$2b$10$IepTxpop8Z3OZOtBQJycIOU61QPBFvhodGaR9Xz6de8ecfbgKRVzS	1	\N	\N	0	\N	1	f	\N
 3	Jesus	Fernandez	Hernandez	20	masculino	7713039166	jesusf1705dck@gmail.com	$2b$10$Zw869fxEHny1dVA8zZiqK.S7ry4g5mtPFRQ/pWTKq1MCsoMRRH2Ry	2	2eb109f1547fe8556839dedffd4ccd113c73c0bb6cd41ce5c410030ac83a9bdf	2025-12-01 00:29:20.02	0	\N	1	f	\N
+16	Luis Jesus	Chavez	Vargas	20	masculino	7717205499	chavezvargasluisjesus@gmail.com	$2b$10$j4ou3VPT8OwpUdvMB90Iz.0PbcVWyIHwR79.GCrYJO6iJWfooTseC	2	\N	\N	0	\N	1	f	\N
+11	Jesus	Fernandez	Hernandez	20	masculino	7713039166	jesushfernandezh@gmail.com	$2b$10$IepTxpop8Z3OZOtBQJycIOU61QPBFvhodGaR9Xz6de8ecfbgKRVzS	1	\N	\N	0	\N	1	f	\N
 14	j	j	j	18	masculino	1234567890	j@gmail.com	$2b$10$icHzpXAZkLRh09v9IgDn/upekYA.IhUzx3m9E5wQQsejJaDsWvSaS	1	\N	\N	0	\N	1	f	\N
 15	Prueba_ED	Prueba1	Prueba11	20	femenino	7594856452	20230015@uthh.edu.mx	$2b$10$ekle/mrRdPOspslN4.JywuwfEKMTAd54sG6mwABM7laIhWEM5EH2a	1	\N	\N	1	\N	1	f	\N
-16	Luis Jesus	Chavez	Vargas	20	masculino	7717205499	chavezvargasluisjesus@gmail.com	$2b$10$j4ou3VPT8OwpUdvMB90Iz.0PbcVWyIHwR79.GCrYJO6iJWfooTseC	2	\N	\N	0	\N	1	f	\N
 \.
 
 
@@ -546,7 +546,7 @@ SELECT pg_catalog.setval('public.academia_infantil_id_guia_seq', 1, false);
 -- Name: backups_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.backups_id_seq', 5, true);
+SELECT pg_catalog.setval('public.backups_id_seq', 4, true);
 
 
 --
@@ -722,5 +722,5 @@ ALTER TABLE ONLY public.usuarios
 -- PostgreSQL database dump complete
 --
 
-\unrestrict F1DiaD7QYdn8iFUdnmheyhN0LibNNGmP7CmfhZILsBNIt9M2nOLj6thYfqmsnvI
+\unrestrict oWesSfwUL6gPCBn5scedJedQyVf0n503UgKXAzdeUVj5b3R2RVhQKK2qRgJehvo
 

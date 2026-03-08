@@ -11,11 +11,11 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params; // 👈 Obtenemos el id directamente
+    const { id } = await params;
     console.log(`GET /api/backups/${id} - Solicitando descarga`);
 
     const result = await pool.query(
-      'SELECT archivo_path FROM backups WHERE id = $1',
+      'SELECT archivo_url FROM backups WHERE id = $1',
       [id]
     );
 
@@ -27,15 +27,15 @@ export async function GET(
       );
     }
 
-    let archivoPath = result.rows[0].archivo_path;
-    console.log(`GET /api/backups/${id} - archivo_path desde BD: "${archivoPath}"`);
+    let archivoUrl = result.rows[0].archivo_url;
+    console.log(`GET /api/backups/${id} - archivo_url desde BD: "${archivoUrl}"`);
 
     // Eliminar barra inicial si existe
-    if (archivoPath.startsWith('/')) {
-      archivoPath = archivoPath.substring(1);
+    if (archivoUrl.startsWith('/')) {
+      archivoUrl = archivoUrl.substring(1);
     }
 
-    const fullPath = path.join(process.cwd(), 'public', archivoPath);
+    const fullPath = path.join(process.cwd(), 'public', archivoUrl);
     console.log(`GET /api/backups/${id} - Ruta completa del archivo: ${fullPath}`);
 
     const fileContent = readFileSync(fullPath);
@@ -48,7 +48,6 @@ export async function GET(
       },
     });
   } catch (error) {
-    // No podemos usar id aquí porque podría no estar definido
     console.error('Error en GET /api/backups/[id]:', error);
     return NextResponse.json(
       { error: 'Error al descargar el archivo' },
@@ -63,11 +62,11 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params; // 👈 Obtenemos el id directamente
+    const { id } = await params;
     console.log(`DELETE /api/backups/${id} - Solicitando eliminación`);
 
     const result = await pool.query(
-      'SELECT archivo_path FROM backups WHERE id = $1',
+      'SELECT archivo_url FROM backups WHERE id = $1',
       [id]
     );
 
@@ -79,14 +78,14 @@ export async function DELETE(
       );
     }
 
-    let archivoPath = result.rows[0].archivo_path;
-    console.log(`DELETE /api/backups/${id} - archivo_path desde BD: "${archivoPath}"`);
+    let archivoUrl = result.rows[0].archivo_url;
+    console.log(`DELETE /api/backups/${id} - archivo_url desde BD: "${archivoUrl}"`);
 
-    if (archivoPath.startsWith('/')) {
-      archivoPath = archivoPath.substring(1);
+    if (archivoUrl.startsWith('/')) {
+      archivoUrl = archivoUrl.substring(1);
     }
 
-    const fullPath = path.join(process.cwd(), 'public', archivoPath);
+    const fullPath = path.join(process.cwd(), 'public', archivoUrl);
     console.log(`DELETE /api/backups/${id} - Ruta completa del archivo: ${fullPath}`);
 
     try {
