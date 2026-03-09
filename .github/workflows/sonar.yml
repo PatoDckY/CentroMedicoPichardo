@@ -1,0 +1,23 @@
+name: Seguridad SAST - Centro Medico Pichardo
+
+on:
+  push:
+    branches:
+      - main # Se activa cada vez que subes algo a la rama main
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  sonarqube:
+    name: Analisis SonarQube
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Importante para que Sonar vea el historial
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://zaid-nonpossessed-sublimely.ngrok-free.dev # Aquí hay un detalle importante
