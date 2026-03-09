@@ -1,232 +1,229 @@
-// screens/admin/GestionCursos.tsx
 "use client";
-import React, { useState, useMemo } from 'react';
-import { Search, Filter, BookOpen, PlusCircle, Edit, Trash2, Users } from 'lucide-react';
-import CursoCard from '../../../public/components/cards/CursoCard'; 
+import React, { useState, useEffect, useMemo } from 'react';
+import { 
+  Search, PlusCircle, Edit, EyeOff, Eye, 
+  Loader2, BookOpen, AlertCircle, Hash, User, Calendar 
+} from 'lucide-react';
+
+// ✅ Asegúrate de que las rutas a tus modales sean correctas
 import CrearCursoModal from './modals/CrearCursoModal';
 import EditarCursoModal from './modals/EditarCursoModal';
+
+// Estilos unificados para el Dashboard
 import '../../styles/Cursos/GestionCursos.css';
 
-// 1. DEFINIMOS EL TIPO EXPLÍCITAMENTE
-type Curso = {
-  id: number;
-  titulo: string;
-  descripcion: string;
-  fechaInicio: string;
-  fechaFin: string;
-  fechaPublicacion: string;
-  inscripcionesAbiertas: boolean;
-  cupoMaximo: number;
-  cupoInscrito: number;
-  instructor: string;
-  horario: string;
-  modalidad: 'Online' | 'Presencial' | 'Híbrido';
-  dirigidoA: 'Padres' | 'Niños' | 'Familia' | 'Adolescentes';
-  estado: 'Activo' | 'Finalizado' | 'Próximamente'; 
-  imagenSrc: string;
-  costo: number | 'Gratuito';
-  ubicacion: string;
-  categoria: string;
-  linkDetalle: string;
-};
-
-// --- DATOS SIMULADOS ---
-const CURSOS_INICIALES: Curso[] = [ 
-  {
-    id: 1,
-    titulo: "Primeros Auxilios Pediátricos",
-    descripcion: "Taller práctico esencial para padres. RCP y atragantamiento.",
-    fechaInicio: "15 Nov 2025",
-    fechaFin: "15 Nov 2025",
-    fechaPublicacion: "01 Oct 2025",
-    inscripcionesAbiertas: true,
-    cupoMaximo: 20,
-    cupoInscrito: 12, 
-    instructor: "Dr. Francisco Wong",
-    horario: "Sábado 09:00 - 13:00",
-    modalidad: "Presencial",
-    dirigidoA: "Padres",
-    estado: "Activo",
-    imagenSrc: "/logo.png", 
-    costo: 800,
-    ubicacion: "Auditorio Torre 2",
-    categoria: "Salud",
-    linkDetalle: "#"
-  },
-];
-
 export default function GestionCursos() {
-  const [cursos, setCursos] = useState<Curso[]>(CURSOS_INICIALES);
+  // --- ESTADOS ---
+  const [cursos, setCursos] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [busqueda, setBusqueda] = useState("");
-  const [filtroAudiencia, setFiltroAudiencia] = useState("Todos");
-  const [filtroEstado, setFiltroEstado] = useState("Activos"); 
 
-  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
-  const [isEditModalOpen, setEditModalOpen] = useState(false);
-  const [cursoAEditar, setCursoAEditar] = useState<Curso | null>(null); 
+  // Estados de Modales
+  const [isCreateOpen, setCreateOpen] = useState(false);
+  const [isEditOpen, setEditOpen] = useState(false);
+  const [seleccionado, setSeleccionado] = useState<any>(null);
 
-  // Lógica de Filtrado
-  const cursosFiltrados = useMemo(() => {
-    return cursos.filter(curso => {
-      const coincideTexto = curso.titulo.toLowerCase().includes(busqueda.toLowerCase()) ||
-                            curso.instructor.toLowerCase().includes(busqueda.toLowerCase());
-      const coincideAudiencia = filtroAudiencia === "Todos" || curso.dirigidoA === filtroAudiencia;
+  // --- 1. CARGAR DATOS (Admin Mode: ve todo) ---
+  const cargarCursos = async () => {
+    try {
+      setLoading(true);
+      setError(null);
       
-      let coincideEstado = true;
-      if (filtroEstado === "Activos") coincideEstado = curso.estado !== "Finalizado";
-      else if (filtroEstado === "Finalizados") coincideEstado = curso.estado === "Finalizado";
-
-      return coincideTexto && coincideAudiencia && coincideEstado;
-    });
-  }, [busqueda, filtroAudiencia, filtroEstado, cursos]);
-
-  // --- CRUD ---
-  const handleCreate = () => setCreateModalOpen(true);
-
-  const guardarNuevoCurso = (nuevoCurso: Curso) => {
-    setCursos([nuevoCurso, ...cursos]);
-    setCreateModalOpen(false);
-  };
-
-  const handleEdit = (id: number) => {
-    const curso = cursos.find(c => c.id === id);
-    if (curso) {
-      setCursoAEditar(curso);
-      setEditModalOpen(true);
+      // 🛡️ Flag ?admin=true para saltar el filtro de 'solo activos'
+      const res = await fetch('/api/cursos?admin=true'); 
+      if (!res.ok) throw new Error("Error de conexión con la base de datos");
+      
+      const data = await res.json();
+      // Validamos que sea un array (o que venga dentro de un objeto .data)
+      const listaLimpia = Array.isArray(data) ? data : (data.data || []);
+      setCursos(listaLimpia);
+    } catch (err: any) {
+      console.error("Error GET Cursos:", err);
+      setError("No se pudo sincronizar la oferta educativa.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const actualizarCurso = (cursoActualizado: Curso) => {
-    setCursos(prev => prev.map(c => c.id === cursoActualizado.id ? cursoActualizado : c));
-    setEditModalOpen(false);
-    setCursoAEditar(null);
-  };
+  useEffect(() => { 
+    cargarCursos(); 
+  }, []);
 
-  const handleDelete = (id: number) => {
-    if (confirm("¿Estás seguro de eliminar este curso?")) {
-        setCursos(prev => prev.filter(c => c.id !== id));
+  // --- 2. FILTRADO EN TIEMPO REAL ---
+  const cursosFiltrados = useMemo(() => {
+    return cursos.filter(c => 
+      (c.tituloCurso || "").toLowerCase().includes(busqueda.toLowerCase()) ||
+      (c.nombreInstructor || "").toLowerCase().includes(busqueda.toLowerCase())
+    );
+  }, [busqueda, cursos]);
+
+  // --- 3. ACCIONES DE GESTIÓN ---
+
+  // Alternar Visibilidad (Borrado Lógico)
+  const handleToggleEstado = async (curso: any) => {
+    const nuevoEstado = !curso.activo;
+    const msg = nuevoEstado ? "¿Publicar este curso ahora?" : "¿Ocultar este curso del catálogo público?";
+    
+    if (window.confirm(msg)) {
+      try {
+        const res = await fetch(`/api/cursos/${curso.idCurso}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...curso, activo: nuevoEstado })
+        });
+        
+        if (res.ok) {
+          // Actualización optimista para feedback instantáneo
+          setCursos(prev => prev.map(c => c.idCurso === curso.idCurso ? { ...c, activo: nuevoEstado } : c));
+        }
+      } catch (err) {
+        alert("Error al cambiar la visibilidad.");
+      }
     }
   };
+
+  // --- RENDERIZADO DE INTERFAZ ---
+  if (loading) return (
+    <div className="admin-loading-full">
+      <Loader2 className="animate-spin" size={48} color="#0a3d62" />
+      <p>Cargando talleres y cursos...</p>
+    </div>
+  );
 
   return (
     <div className="admin-cursos-container">
       
-      {/* --- HEADER --- */}
-      <header className="admin-cursos-header">
-        <div className="header-background"></div>
-        <div className="header-content">
-          <h1 className="header-title">Gestión de Cursos y Talleres</h1>
-          <p className="header-subtitle">Administra la oferta educativa de la Academia Infantil.</p>
+      {/* CABECERA CON ESTADÍSTICAS */}
+      <header className="admin-header-main">
+        <div className="header-left">
+          <h1>Gestión de Oferta Educativa</h1>
+          <div className="stats-badges">
+            <span className="badge-stat">Registros: {cursos.length}</span>
+            <span className="badge-stat success">Activos: {cursos.filter(c => c.activo).length}</span>
+          </div>
         </div>
+        <button className="btn-add-main" onClick={() => setCreateOpen(true)}>
+          <PlusCircle size={20} /> Crear Nuevo Curso
+        </button>
       </header>
 
-      {/* --- TOOLS BAR --- */}
-      <div className="admin-tools-wrapper">
-        <div className="admin-tools-card">
-          
-          <div className="search-section">
-            <div className="search-input-wrapper">
-              <Search size={20} className="search-icon" />
-              <input 
-                type="text" 
-                placeholder="Buscar curso o instructor..." 
-                value={busqueda}
-                onChange={(e) => setBusqueda(e.target.value)}
-              />
-            </div>
-            
-            {/* Filtros */}
-            <div className="filters-group">
-                <select 
-                    value={filtroAudiencia} 
-                    onChange={(e) => setFiltroAudiencia(e.target.value)}
-                    className="filter-select"
-                >
-                    <option value="Todos">Audiencia: Todas</option>
-                    <option value="Padres">Para Padres</option>
-                    <option value="Niños">Para Niños</option>
-                </select>
-                <select 
-                    value={filtroEstado} 
-                    onChange={(e) => setFiltroEstado(e.target.value)}
-                    className="filter-select"
-                >
-                    <option value="Activos">Estado: Activos</option>
-                    <option value="Finalizados">Finalizados</option>
-                    <option value="Todos">Todos</option>
-                </select>
-            </div>
-          </div>
-
-          {/* ACCIONES: BOTÓN AÑADIR + BADGE */}
-          <div className="actions-section">
-            {/* --- BOTÓN AÑADIR CURSO (AGREGADO) --- */}
-            <button className="btn-admin-create" onClick={handleCreate}>
-                <PlusCircle size={20} /> Añadir Curso
-            </button>
-            
-            <div className="stats-badge">
-                <BookOpen size={16} /> 
-                <span>{cursos.length} Cursos</span>
-            </div>
-          </div>
-
+      {/* BARRA DE HERRAMIENTAS */}
+      <div className="admin-filters-bar">
+        <div className="search-box">
+          <Search size={18} />
+          <input 
+            type="text"
+            placeholder="Buscar por nombre de curso o instructor..." 
+            value={busqueda} 
+            onChange={(e) => setBusqueda(e.target.value)} 
+          />
         </div>
       </div>
 
-      {/* --- GRID --- */}
-      <main className="admin-cursos-content">
-        {cursosFiltrados.length > 0 ? (
-          <div className="admin-cursos-grid">
-            {cursosFiltrados.map((curso) => (
-              <div key={curso.id} className="admin-curso-wrapper">
-                
-                <CursoCard 
-                  {...curso}
-                  linkDetalle="#"
-                />
+      {error && <div className="admin-error-alert"><AlertCircle size={20} /> {error}</div>}
 
-                <div className="curso-controls">
-                    <button 
-                        className="btn-control-curso edit" 
-                        onClick={() => handleEdit(curso.id)}
-                    >
-                        <Edit size={16} /> Editar
-                    </button>
-                    <button 
-                        className="btn-control-curso delete" 
-                        onClick={() => handleDelete(curso.id)}
-                    >
-                        <Trash2 size={16} /> Eliminar
-                    </button>
-                </div>
+      {/* TABLA DE GESTIÓN */}
+      <div className="table-responsive-container">
+        <table className="admin-data-table">
+          <thead>
+            <tr>
+              <th style={{ width: '60px' }}><Hash size={14}/> ID</th>
+              <th style={{ width: '100px' }}>Portada</th>
+              <th>Información del Curso</th>
+              <th style={{ width: '200px' }}><User size={14}/> Instructor</th>
+              <th style={{ width: '150px' }}><Calendar size={14}/> Fecha Inicio</th>
+              <th style={{ width: '120px' }}>Estado</th>
+              <th style={{ width: '100px' }}>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {cursosFiltrados.length > 0 ? (
+              cursosFiltrados.map((c) => (
+                <tr key={c.idCurso} className={!c.activo ? 'row-inactive' : ''}>
+                  <td className="text-center font-bold">{c.idCurso}</td>
+                  <td>
+                    <img 
+                      src={c.urlImagenPortada || "/logo.png"} 
+                      alt="Mini" 
+                      className="img-thumb" 
+                    />
+                  </td>
+                  <td>
+                    <div className="cell-title">{c.tituloCurso || "Sin título"}</div>
+                    <div className="cell-subtitle">
+                      {c.categoria} • {c.modalidad} • ${c.costo || '0.00'}
+                    </div>
+                  </td>
+                  <td>{c.nombreInstructor || `ID Médico: ${c.idInstructor}`}</td>
+                  <td>{c.fechaInicio ? new Date(c.fechaInicio).toLocaleDateString() : 'Pendiente'}</td>
+                  <td>
+                    <span className={`pill-status ${c.activo ? 'active' : 'hidden'}`}>
+                      {c.activo ? 'Público' : 'Oculto'}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="actions-flex">
+                      <button 
+                        className="btn-icon edit" 
+                        title="Editar"
+                        onClick={() => { setSeleccionado(c); setEditOpen(true); }}
+                      >
+                        <Edit size={16} />
+                      </button>
+                      <button 
+                        className={`btn-icon toggle ${c.activo ? 'to-hide' : 'to-show'}`} 
+                        title={c.activo ? "Ocultar de la web" : "Publicar curso"}
+                        onClick={() => handleToggleEstado(c)}
+                      >
+                        {c.activo ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={7} className="empty-table-msg">
+                  <BookOpen size={40} />
+                  <p>No se encontraron resultados que coincidan con la búsqueda.</p>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
 
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="empty-state">
-            <BookOpen size={48} className="empty-icon" />
-            <h3>No se encontraron cursos</h3>
-            <p>Intenta ajustar los filtros de búsqueda.</p>
-          </div>
-        )}
-      </main>
+      {/* --- RENDERIZADO DE MODALES --- */}
 
-      {/* --- MODALES --- */}
       <CrearCursoModal 
-        isOpen={isCreateModalOpen} 
-        onClose={() => setCreateModalOpen(false)} 
-        onSave={guardarNuevoCurso}
+        isOpen={isCreateOpen} 
+        onClose={() => setCreateOpen(false)} 
+        onSave={async (nuevo: any) => {
+          const res = await fetch('/api/cursos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(nuevo)
+          });
+          if (res.ok) await cargarCursos();
+        }} 
       />
 
-      <EditarCursoModal
-        isOpen={isEditModalOpen}
-        onClose={() => setEditModalOpen(false)}
-        onSave={actualizarCurso}
-        curso={cursoAEditar}
-      />
-
+      {seleccionado && (
+        <EditarCursoModal 
+          isOpen={isEditOpen} 
+          onClose={() => { setEditOpen(false); setSeleccionado(null); }} 
+          onSave={async (editado: any) => {
+            const res = await fetch(`/api/cursos/${editado.idCurso}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(editado)
+            });
+            if (res.ok) await cargarCursos();
+          }} 
+          curso={seleccionado} 
+        />
+      )}
     </div>
   );
 }

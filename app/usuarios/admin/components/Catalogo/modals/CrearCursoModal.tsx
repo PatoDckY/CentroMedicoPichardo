@@ -1,8 +1,6 @@
-// screens/admin/modals/CrearCursoModal.tsx
 "use client";
 import React, { useState } from 'react';
 import { X, Save, BookOpen } from 'lucide-react';
-// IMPORTAMOS EL NUEVO CSS
 import '../../../styles/Cursos/CursoModals.css';
 
 interface CrearCursoModalProps {
@@ -13,9 +11,9 @@ interface CrearCursoModalProps {
 
 export default function CrearCursoModal({ isOpen, onClose, onSave }: CrearCursoModalProps) {
   const [formData, setFormData] = useState({
-    titulo: '',
+    tituloCurso: '',
     descripcion: '',
-    instructor: '',
+    idInstructor: '', // Ahora es ID numérico
     categoria: 'Salud',
     fechaInicio: '',
     fechaFin: '',
@@ -25,7 +23,7 @@ export default function CrearCursoModal({ isOpen, onClose, onSave }: CrearCursoM
     cupoMaximo: 20,
     costo: 0,
     ubicacion: '',
-    imagenSrc: ''
+    urlImagenPortada: '' // Nombre real de la columna
   });
 
   if (!isOpen) return null;
@@ -37,45 +35,41 @@ export default function CrearCursoModal({ isOpen, onClose, onSave }: CrearCursoM
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const nuevoCurso = {
-      id: Date.now(),
+    
+    // El objeto se envía con los nombres que la API espera (Schema)
+    const payload = {
       ...formData,
-      fechaPublicacion: new Date().toLocaleDateString(),
-      inscripcionesAbiertas: true,
-      cupoInscrito: 0,
-      estado: 'Activo',
-      costo: Number(formData.costo) === 0 ? 'Gratuito' : formData.costo,
-      imagenSrc: formData.imagenSrc || "/logo.png",
-      linkDetalle: "#"
+      idInstructor: Number(formData.idInstructor),
+      cupoMaximo: Number(formData.cupoMaximo),
+      costo: formData.costo.toString(), // Drizzle numeric requiere string
+      urlImagenPortada: formData.urlImagenPortada || "/logo.png"
     };
-    onSave(nuevoCurso);
+
+    onSave(payload);
+    
+    // Limpiar
     setFormData({
-      titulo: '', descripcion: '', instructor: '', categoria: 'Salud',
+      tituloCurso: '', descripcion: '', idInstructor: '', categoria: 'Salud',
       fechaInicio: '', fechaFin: '', horario: '', modalidad: 'Presencial',
-      dirigidoA: 'Padres', cupoMaximo: 20, costo: 0, ubicacion: '', imagenSrc: ''
+      dirigidoA: 'Padres', cupoMaximo: 20, costo: 0, ubicacion: '', urlImagenPortada: ''
     });
   };
 
   return (
     <div className="course-modal-overlay">
       <div className="course-modal-container">
-        
-        {/* HEADER */}
         <div className="course-modal-header">
           <h2 className="course-modal-title"><BookOpen size={24}/> Crear Nuevo Curso</h2>
           <button className="btn-close-course" onClick={onClose}><X size={24} /></button>
         </div>
 
-        {/* FORM */}
         <form onSubmit={handleSubmit} className="course-modal-form">
-          
-          {/* SECCIÓN 1 */}
           <div className="form-section-header">Información Básica</div>
           
           <div className="form-grid-row">
             <div className="course-input-group full-width">
               <label>Título del Curso</label>
-              <input name="titulo" value={formData.titulo} onChange={handleChange} placeholder="Ej: Primeros Auxilios Pediátricos" required />
+              <input name="tituloCurso" value={formData.tituloCurso} onChange={handleChange} placeholder="Ej: Primeros Auxilios..." required />
             </div>
           </div>
 
@@ -88,8 +82,8 @@ export default function CrearCursoModal({ isOpen, onClose, onSave }: CrearCursoM
 
           <div className="form-grid-row">
             <div className="course-input-group">
-              <label>Instructor / Especialista</label>
-              <input name="instructor" value={formData.instructor} onChange={handleChange} placeholder="Dr. Juan Pérez" required />
+              <label>ID Instructor (Médico)</label>
+              <input type="number" name="idInstructor" value={formData.idInstructor} onChange={handleChange} placeholder="ID ej: 1" required />
             </div>
             <div className="course-input-group">
               <label>Categoría</label>
@@ -102,17 +96,16 @@ export default function CrearCursoModal({ isOpen, onClose, onSave }: CrearCursoM
             </div>
           </div>
 
-          {/* SECCIÓN 2 */}
           <div className="form-section-header">Logística y Fechas</div>
 
           <div className="form-grid-row cols-3">
             <div className="course-input-group">
               <label>Fecha Inicio</label>
-              <input type="text" name="fechaInicio" value={formData.fechaInicio} onChange={handleChange} placeholder="DD/MM/AAAA" required />
+              <input type="date" name="fechaInicio" value={formData.fechaInicio} onChange={handleChange} required />
             </div>
             <div className="course-input-group">
               <label>Fecha Fin</label>
-              <input type="text" name="fechaFin" value={formData.fechaFin} onChange={handleChange} placeholder="DD/MM/AAAA" />
+              <input type="date" name="fechaFin" value={formData.fechaFin} onChange={handleChange} />
             </div>
             <div className="course-input-group">
               <label>Horario</label>
@@ -135,6 +128,7 @@ export default function CrearCursoModal({ isOpen, onClose, onSave }: CrearCursoM
                 <option value="Padres">Padres</option>
                 <option value="Niños">Niños</option>
                 <option value="Familia">Familia</option>
+                <option value="Adolescentes">Adolescentes</option>
               </select>
             </div>
             <div className="course-input-group">
@@ -143,35 +137,31 @@ export default function CrearCursoModal({ isOpen, onClose, onSave }: CrearCursoM
             </div>
           </div>
 
-          {/* SECCIÓN 3 */}
           <div className="form-section-header">Detalles Finales</div>
 
           <div className="form-grid-row">
             <div className="course-input-group">
                 <label>Ubicación (Sala/Zoom)</label>
-                <input name="ubicacion" value={formData.ubicacion} onChange={handleChange} placeholder="Auditorio Torre 2" />
+                <input name="ubicacion" value={formData.ubicacion} onChange={handleChange} />
             </div>
             <div className="course-input-group">
-                <label>Costo (0 = Gratis)</label>
-                <input type="number" name="costo" value={formData.costo} onChange={handleChange} />
+                <label>Costo</label>
+                <input type="number" name="costo" value={formData.costo} onChange={handleChange} step="0.01" />
             </div>
           </div>
 
           <div className="course-input-group full-width">
             <label>URL Imagen de Portada</label>
-            <input name="imagenSrc" value={formData.imagenSrc} onChange={handleChange} placeholder="https://..." />
+            <input name="urlImagenPortada" value={formData.urlImagenPortada} onChange={handleChange} placeholder="https://..." />
           </div>
 
+          <div className="course-modal-footer">
+            <button type="button" className="btn-course-cancel" onClick={onClose}>Cancelar</button>
+            <button type="submit" className="btn-course-save">
+              <Save size={18}/> Publicar Curso
+            </button>
+          </div>
         </form>
-
-        {/* FOOTER */}
-        <div className="course-modal-footer">
-          <button type="button" className="btn-course-cancel" onClick={onClose}>Cancelar</button>
-          <button type="button" className="btn-course-save" onClick={(e) => handleSubmit(e as any)}>
-            <Save size={18}/> Publicar Curso
-          </button>
-        </div>
-
       </div>
     </div>
   );

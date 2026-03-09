@@ -1,59 +1,65 @@
 "use client";
-import React from 'react';
-import { useRouter } from "next/navigation";
-import DetalleCursoView, { ImagenCurso } from './DetalleCursoView'; // Ajusta la ruta de importación
-import { toast } from "react-toastify";
+
+import React, { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import DetalleCursoView from "./DetalleCursoView";
 
 export default function DetalleCurso() {
-  const router = useRouter();
 
-  const handleCompra = () => {
-    // Aquí iría tu lógica de Stripe, PayPal o redirección a WhatsApp
-    toast.success("¡Redirigiendo a pasarela de pago!");
-  };
+  const params = useParams();
+  console.log("PARAMS:", params);
 
-  // --- DATOS DEL CURSO ESPECÍFICO (LAS 5 INTELIGENCIAS) ---
-  const IMAGENES_CURSO: ImagenCurso[] = [
-    {
-        src: "/Inteligencias.jpg", // Cambia esto por una foto real del taller
-        descripcion: "Escanealo con la aplicacion para visualizarlo en 3D"
-    },
-    {
-        src: "/brains.png", // Otra imagen
-        descripcion: "Material didáctico incluido en el kit de bienvenida."
-    }
-  ];
+  const id = params?.id;
 
-  const DESCRIPCION_LARGA = `
-    Este curso está diseñado para padres que desean ir más allá de la crianza tradicional y entender cómo funciona realmente el cerebro de sus hijos.
-    
-    A lo largo de dos días intensivos, exploraremos:
-    1. Inteligencia Emocional: Cómo ayudarles a gestionar sus frustraciones.
-    2. Inteligencia Lógica: Juegos para despertar el pensamiento crítico.
-    3. Inteligencia Creativa: El arte como medio de expresión.
-    4. Inteligencia Social: Habilidades para relacionarse sanamente.
-    5. Inteligencia Kinestésica: Conexión mente-cuerpo.
+  const [curso, setCurso] = useState<any>(null);
 
-    No necesitas conocimientos previos de psicología. Todo se explica con ejemplos prácticos, ejercicios vivenciales y herramientas que podrás aplicar en casa desde el primer día.
-    
-    ¡Incluye manual de trabajo y refrigerio!
-  `;
+  useEffect(() => {
+
+    if (!id) return;
+
+    const cargarCurso = async () => {
+
+      try {
+
+        const res = await fetch(`/api/cursos/${id}`);
+        const data = await res.json();
+
+        setCurso(data);
+
+      } catch (error) {
+        console.error("Error cargando curso:", error);
+      }
+
+    };
+
+    cargarCurso();
+
+  }, [id]);
+
+  if (!curso) {
+    return <p style={{ textAlign: "center" }}>Cargando curso...</p>;
+  }
 
   return (
     <DetalleCursoView
-      titulo="Las 5 Inteligencias del Cerebro Infantil"
-      instructor="Dra. Mariana Echeverría"
-      descripcionCompleta={DESCRIPCION_LARGA}
-      horario="Viernes y Sábado 16:00 - 19:00"
-      ubicacion="Auditorio Principal, Torre Médica 1"
-      fechaInicio="05 Dic 2025"
-      fechaFin="06 Dic 2025"
-      cupoMaximo={30}
+      titulo={curso.tituloCurso}
+      instructor="Instructor del curso"
+      descripcionCompleta={curso.descripcion}
+      horario={curso.horario}
+      ubicacion={curso.ubicacion}
+      fechaInicio={curso.fechaInicio}
+      fechaFin={curso.fechaFin}
+      cupoMaximo={curso.cupoMaximo}
       cupoInscrito={5}
-      dirigidoA="Padres de familia y tutores"
-      costo={1200}
-      imagenes={IMAGENES_CURSO} // Si borras esta línea, el layout se adapta a solo texto automáticamente
-      onAdquirir={handleCompra}
+      dirigidoA={curso.dirigidoA}
+      costo={curso.costo}
+      imagenes={[
+        {
+          src: curso.urlImagenPortada,
+          descripcion: "Imagen del curso"
+        }
+      ]}
+      onAdquirir={() => alert("Ir a pago")}
     />
   );
 }

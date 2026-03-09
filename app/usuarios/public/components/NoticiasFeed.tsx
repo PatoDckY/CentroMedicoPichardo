@@ -1,86 +1,143 @@
-// components/NoticiasFeed.tsx - Diseño Mejorado
-import React from 'react';
+"use client";
+import React, { useState, useEffect } from 'react';
 import NoticiaBreveCard from './cards/NoticiaBreveCard'; 
 import BlogSidebarPediatria from './SideBars/BlogSidebarPediatria'; 
+import { Loader2, Newspaper, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
 import '../styles/NoticiasFeed.css'; 
 
-// Datos de Noticias Pediátricas (Primer artículo destacado)
-const NOTICIAS_PED = [
-  {
-    id: 1,
-    imagenSrc: "/logo.png",
-    altTexto: "Niño recibiendo vacuna",
-    titulo: "Nueva Guía de Vacunación: Protegiendo a nuestros Niños",
-    bajada: "El Comité Pediátrico Internacional ha actualizado las recomendaciones para la vacunación infantil en 2025, enfocándose en la prevención de virus respiratorios y sarampión.",
-    autor: "Dr. Pérez",
-    fecha: "20.11.2025 10:30",
-    linkVerMas: "#",
-    etiquetas: ["vacunas", "prevencion", "salud infantil", "protocolo", "noticias"],
-  },
-  {
-    id: 2,
-    imagenSrc: "/logo.png",
-    altTexto: "Alimentos saludables para niños",
-    titulo: "Importancia de la Vitamina D en el Desarrollo Óseo Infantil",
-    bajada: "Especialistas en nutrición destacan la necesidad de suplementar la Vitamina D en infantes, especialmente en regiones con baja exposición solar, para evitar el raquitismo.",
-    autor: "Dra. Rodríguez",
-    fecha: "18.11.2025 09:00",
-    linkVerMas: "#",
-    etiquetas: ["nutricion", "desarrollo", "dieta", "vitaminas"],
-  },
-];
+interface Publicacion {
+  idPublicacion: number;
+  tituloNoticia: string;
+  resumenBajada: string;
+  nombreAutor?: string;
+  fechaPublicacion: string;
+  urlImagen: string | null;
+  etiquetas: string | null;
+}
 
 export default function NoticiasFeed() {
-  const noticiaDestacada = NOTICIAS_PED[0];
-  const otrasNoticias = NOTICIAS_PED.slice(1);
+  const [noticias, setNoticias] = useState<Publicacion[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [paginaActual, setPaginaActual] = useState(1);
+  const [totalPaginas, setTotalPaginas] = useState(0);
+  
+  const LIMITE = 5;
+
+  useEffect(() => {
+    const fetchNoticias = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const offset = (paginaActual - 1) * LIMITE;
+        // 🛡️ Al no enviar ?admin=true, la API solo nos da las publicaciones activas
+        const res = await fetch(`/api/publicaciones?limit=${LIMITE}&offset=${offset}`);
+        
+        if (!res.ok) throw new Error('No pudimos conectar con el servidor de noticias');
+        
+        const responseData = await res.json();
+        
+        // Sincronizamos con el formato { data, total } de nuestra API
+        setNoticias(responseData.data || []);
+        setTotalPaginas(Math.ceil((responseData.total || 0) / LIMITE));
+
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+        // Scroll suave al inicio al cambiar de página para mejorar la UX
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    };
+
+    fetchNoticias();
+  }, [paginaActual]);
+
+  if (loading) {
+    return (
+      <div className="noticias-loading-state">
+        <Loader2 className="animate-spin" size={40} color="#0a3d62" />
+        <p>Sincronizando últimas noticias...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="noticias-feed-layout">
-      
-      {/* Columna Principal de Contenido */}
       <div className="noticias-content-area">
-        <h1 className="blog-category-main-title">Blog: Noticias Pediátricas</h1>
+        <header className="blog-header">
+          <h1 className="blog-category-main-title">Noticias y Consejos Pediátricos</h1>
+          <p className="blog-description">Información confiable para el cuidado de los más pequeños.</p>
+        </header>
+
+        {error && (
+          <div className="noticias-error-box">
+            <AlertCircle size={20} /> {error}
+          </div>
+        )}
         
         <div className="noticias-grid-wrapper">
-          
-          {/* 1. Área de Noticia Destacada (Full-width card, con diseño de entrada de blog más grande) */}
-          <div className="noticia-destacada">
-             <NoticiaBreveCard
-                imagenSrc={noticiaDestacada.imagenSrc}
-                altTexto={noticiaDestacada.altTexto}
-                titulo={noticiaDestacada.titulo}
-                bajada={noticiaDestacada.bajada}
-                autor={noticiaDestacada.autor}
-                fecha={noticiaDestacada.fecha}
-                linkVerMas={noticiaDestacada.linkVerMas}
-                etiquetas={noticiaDestacada.etiquetas}
-            />
-          </div>
+          {noticias.length > 0 ? (
+            <>
+              {noticias.map((noticia, index) => (
+                <div 
+                  key={noticia.idPublicacion} 
+                  className={index === 0 && paginaActual === 1 ? "noticia-destacada" : "noticia-normal"}
+                >
+                  <NoticiaBreveCard
+                    imagenSrc={noticia.urlImagen || "/logo.png"}
+                    altTexto={noticia.tituloNoticia}
+                    titulo={noticia.tituloNoticia}
+                    bajada={noticia.resumenBajada}
+                    autor={noticia.nombreAutor || "Especialista FixFlow"}
+                    fecha={new Date(noticia.fechaPublicacion).toLocaleDateString('es-MX', {
+                      day: 'numeric', month: 'long', year: 'numeric'
+                    })}
+                    linkVerMas={`/blog/${noticia.idPublicacion}`}
+                    etiquetas={noticia.etiquetas ? noticia.etiquetas.split(',') : []}
+                  />
+                </div>
+              ))}
 
-          {/* 2. Área de Otras Noticias (Horizontal, si hubiera más de una) */}
-          <div className="otras-noticias-list">
-            {otrasNoticias.map(noticia => (
-              <NoticiaBreveCard
-                key={noticia.id}
-                imagenSrc={noticia.imagenSrc}
-                altTexto={noticia.altTexto}
-                titulo={noticia.titulo}
-                bajada={noticia.bajada}
-                autor={noticia.autor}
-                fecha={noticia.fecha}
-                linkVerMas={noticia.linkVerMas}
-                etiquetas={noticia.etiquetas}
-              />
-            ))}
-          </div>
+              {/* CONTROLES DE PAGINACIÓN */}
+              {totalPaginas > 1 && (
+                <div className="pagination-controls">
+                  <button 
+                    disabled={paginaActual === 1}
+                    onClick={() => setPaginaActual(prev => prev - 1)}
+                    className="pagination-btn"
+                  >
+                    <ChevronLeft size={20} /> Anterior
+                  </button>
 
-        </div> {/* /.noticias-grid-wrapper */}
-      </div> {/* /.noticias-content-area */}
+                  <div className="pagination-info">
+                    Página <span>{paginaActual}</span> de {totalPaginas}
+                  </div>
 
-      {/* Columna de la Barra Lateral */}
-      <div className="noticias-sidebar-area">
-        <BlogSidebarPediatria />
+                  <button 
+                    disabled={paginaActual === totalPaginas}
+                    onClick={() => setPaginaActual(prev => prev + 1)}
+                    className="pagination-btn"
+                  >
+                    Siguiente <ChevronRight size={20} />
+                  </button>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="empty-blog-state">
+              <Newspaper size={48} strokeWidth={1} />
+              <h3>¡Ups! No hay noticias aquí</h3>
+              <p>Parece que aún no hay publicaciones activas en esta sección.</p>
+            </div>
+          )}
+        </div>
       </div>
+
+      <aside className="noticias-sidebar-area">
+        <BlogSidebarPediatria />
+      </aside>
     </div>
   );
 }

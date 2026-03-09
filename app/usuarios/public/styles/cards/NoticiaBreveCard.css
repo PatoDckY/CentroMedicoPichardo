@@ -1,5 +1,46 @@
 /* styles/NoticiaBreveCard.css */
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  margin-top: 40px;
+  padding: 20px;
+  border-top: 1px solid #eee;
+}
 
+.pagination-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background-color: #f0f7ff;
+  color: #0070f3;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background-color: #0070f3;
+  color: white;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(1);
+}
+
+.pagination-info {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.pagination-info span {
+  font-weight: bold;
+  color: #333;
+}
 :root {
   --color-titulo: #004d80; 
   --color-texto-principal: #333333;

@@ -1,157 +1,132 @@
-// screens/admin/modals/CrearPublicacionModal.tsx
 "use client";
 import React, { useState } from 'react';
-import { X, Save, Image as ImageIcon, Tag } from 'lucide-react';
+import { X, Save, ImageIcon, Tag, User, AlignLeft, FileText, Loader2 } from 'lucide-react';
 import '../../../styles/Academia/CrearPublicacionModal.css';
 
-interface CrearPublicacionModalProps {
+interface CrearProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (nuevaPublicacion: any) => void;
+  onSave: (data: any) => Promise<void>;
 }
 
-export default function CrearPublicacionModal({ isOpen, onClose, onSave }: CrearPublicacionModalProps) {
-  // Estado del formulario
+export default function CrearPublicacionModal({ isOpen, onClose, onSave }: CrearProps) {
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     titulo: '',
     bajada: '',
-    autor: '',
-    fecha: new Date().toLocaleDateString('es-MX'), // Fecha de hoy por defecto
-    imagenSrc: '', // Por ahora texto (URL), idealmente sería un upload
-    etiquetasInput: '' // Texto separado por comas
+    descripcionLarga: '',
+    imagenSrc: '',
+    etiquetas: '',
+    idAutor: ''
   });
 
   if (!isOpen) return null;
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Procesar etiquetas (separar por comas y limpiar espacios)
-    const etiquetasArray = formData.etiquetasInput
-      .split(',')
-      .map(tag => tag.trim())
-      .filter(tag => tag !== '');
+    setLoading(true);
+    try {
+      // 🛡️ Mapeo de nombres para que coincidan con el Schema/API
+      const dataParaAPI = {
+        titulo: formData.titulo,
+        bajada: formData.bajada,
+        descripcionLarga: formData.descripcionLarga,
+        imagenSrc: formData.imagenSrc,
+        etiquetas: formData.etiquetas,
+        idAutor: formData.idAutor,
+        activo: true // Las nuevas guías nacen activas
+      };
 
-    // Crear objeto final
-    const nuevaPublicacion = {
-      id: Date.now(), // ID temporal único
-      titulo: formData.titulo,
-      bajada: formData.bajada,
-      autor: formData.autor,
-      fecha: formData.fecha,
-      imagenSrc: formData.imagenSrc || "/logo.png", // Imagen por defecto si no pone nada
-      altTexto: formData.titulo,
-      linkVerMas: "#",
-      etiquetas: etiquetasArray
-    };
-
-    onSave(nuevaPublicacion);
-    
-    // Limpiar formulario (opcional)
-    setFormData({
-        titulo: '', bajada: '', autor: '', fecha: new Date().toLocaleDateString('es-MX'), 
-        imagenSrc: '', etiquetasInput: ''
-    });
+      await onSave(dataParaAPI);
+      setFormData({ titulo: '', bajada: '', descripcionLarga: '', imagenSrc: '', etiquetas: '', idAutor: '' });
+      onClose();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="modal-overlay">
       <div className="modal-container">
-        
-        {/* Header del Modal */}
         <div className="modal-header">
-          <h2 className="modal-title">Nueva Publicación</h2>
-          <button className="btn-close" onClick={onClose}>
-            <X size={24} />
-          </button>
+          <h2 className="modal-title"><FileText size={20} /> Nueva Guía Educativa</h2>
+          <button className="btn-close" onClick={onClose}><X size={24} /></button>
         </div>
 
-        {/* Cuerpo del Formulario */}
         <form onSubmit={handleSubmit} className="modal-form">
-          
           <div className="form-group">
-            <label>Título de la Guía o Noticia</label>
+            <label>Título de la Guía</label>
             <input 
               type="text" 
-              name="titulo" 
               value={formData.titulo} 
-              onChange={handleChange} 
-              placeholder="Ej: Importancia de la Vacunación..." 
+              onChange={(e) => setFormData({...formData, titulo: e.target.value})} 
+              placeholder="Ej: Higiene Bucal en Niños"
               required 
             />
           </div>
 
           <div className="form-group">
-            <label>Descripción Corta (Bajada)</label>
+            <label>Resumen Corto (Para la tarjeta)</label>
             <textarea 
-              name="bajada" 
               value={formData.bajada} 
-              onChange={handleChange} 
-              placeholder="Resumen breve del contenido..." 
-              rows={3}
+              onChange={(e) => setFormData({...formData, bajada: e.target.value})} 
+              placeholder="Breve introducción..."
+              rows={2}
+              required 
+            />
+          </div>
+
+          <div className="form-group">
+            <label><AlignLeft size={16}/> Contenido Completo</label>
+            <textarea 
+              value={formData.descripcionLarga} 
+              onChange={(e) => setFormData({...formData, descripcionLarga: e.target.value})} 
+              placeholder="Desarrolla todo el tema aquí..."
+              rows={6}
               required 
             />
           </div>
 
           <div className="form-row">
             <div className="form-group half">
-              <label>Autor / Especialista</label>
+              <label><User size={16}/> ID Autor</label>
               <input 
-                type="text" 
-                name="autor" 
-                value={formData.autor} 
-                onChange={handleChange} 
-                placeholder="Ej: Dr. Pérez" 
+                type="number" 
+                value={formData.idAutor} 
+                onChange={(e) => setFormData({...formData, idAutor: e.target.value})} 
+                required 
               />
             </div>
             <div className="form-group half">
-              <label>Fecha de Publicación</label>
+              <label><Tag size={16}/> Etiquetas</label>
               <input 
                 type="text" 
-                name="fecha" 
-                value={formData.fecha} 
-                onChange={handleChange} 
+                value={formData.etiquetas} 
+                onChange={(e) => setFormData({...formData, etiquetas: e.target.value})} 
+                placeholder="salud, prevención" 
               />
             </div>
           </div>
 
           <div className="form-group">
-            <label><ImageIcon size={16}/> URL de la Imagen (Opcional)</label>
+            <label><ImageIcon size={16}/> URL de Imagen</label>
             <input 
               type="text" 
-              name="imagenSrc" 
               value={formData.imagenSrc} 
-              onChange={handleChange} 
-              placeholder="https://..." 
+              onChange={(e) => setFormData({...formData, imagenSrc: e.target.value})} 
+              placeholder="/imagen.jpg" 
             />
           </div>
 
-          <div className="form-group">
-            <label><Tag size={16}/> Etiquetas (Separadas por comas)</label>
-            <input 
-              type="text" 
-              name="etiquetasInput" 
-              value={formData.etiquetasInput} 
-              onChange={handleChange} 
-              placeholder="Ej: salud, nutrición, bebés" 
-            />
-          </div>
-
-          {/* Footer del Modal (Acciones) */}
           <div className="modal-footer">
-            <button type="button" className="btn-cancel" onClick={onClose}>
-              Cancelar
-            </button>
-            <button type="submit" className="btn-save">
-              <Save size={18} /> Guardar Publicación
+            <button type="button" className="btn-cancel" onClick={onClose}>Cancelar</button>
+            <button type="submit" className="btn-save" disabled={loading}>
+              {loading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+              {loading ? " Guardando..." : " Publicar Guía"}
             </button>
           </div>
-
         </form>
       </div>
     </div>

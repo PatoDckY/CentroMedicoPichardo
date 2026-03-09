@@ -1,230 +1,176 @@
-// screens/admin/GestionNoticias.tsx
 "use client";
-import React, { useState } from 'react';
-import { Search, PlusCircle, Edit, Trash2, Eye, EyeOff, FileText } from 'lucide-react';
-import NoticiaBreveCard from '../../../public/components/cards/NoticiaBreveCard'; 
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  Search, PlusCircle, Edit, EyeOff, Eye,
+  Loader2, Newspaper, AlertCircle, Hash, User, Calendar
+} from 'lucide-react';
+
 import CrearNoticiaModal from './modals/CrearNoticiaModal';
 import EditarNoticiaModal from './modals/EditarNoticiaModal';
-import '../../styles/blog/GestionNoticias.css'; 
-
-// --- TIPO DE DATOS ---
-export type Noticia = {
-  id: number;
-  imagenSrc: string;
-  altTexto: string;
-  titulo: string;
-  bajada: string;
-  autor: string;
-  fecha: string;
-  linkVerMas: string;
-  etiquetas: string[];
-  visible: boolean; // Nuevo campo para controlar visibilidad
-};
-
-// --- DATOS SIMULADOS ---
-const NOTICIAS_INICIALES: Noticia[] = [
-  {
-    id: 1,
-    imagenSrc: "/logo.png",
-    altTexto: "Niño recibiendo vacuna",
-    titulo: "Nueva Guía de Vacunación 2025",
-    bajada: "Actualización de las recomendaciones para la vacunación infantil enfocándose en la prevención de virus respiratorios.",
-    autor: "Dr. Pérez",
-    fecha: "20.11.2025",
-    linkVerMas: "#",
-    etiquetas: ["vacunas", "salud infantil", "protocolo"],
-    visible: true,
-  },
-  {
-    id: 2,
-    imagenSrc: "/logo.png",
-    altTexto: "Alimentos saludables",
-    titulo: "Importancia de la Vitamina D",
-    bajada: "Especialistas destacan la necesidad de suplementar la Vitamina D en infantes para evitar el raquitismo.",
-    autor: "Dra. Rodríguez",
-    fecha: "18.11.2025",
-    linkVerMas: "#",
-    etiquetas: ["nutricion", "desarrollo", "vitaminas"],
-    visible: true,
-  },
-  {
-    id: 3,
-    imagenSrc: "/logo.png",
-    altTexto: "Borrador",
-    titulo: "Borrador: Consejos de Sueño (Oculto)",
-    bajada: "Este artículo está oculto al público mientras se termina de editar.",
-    autor: "Admin",
-    fecha: "22.11.2025",
-    linkVerMas: "#",
-    etiquetas: ["sueño", "borrador"],
-    visible: false, // Ejemplo de noticia oculta
-  },
-];
+import '../../styles/blog/GestionNoticias.css';
 
 export default function GestionNoticias() {
-  const [noticias, setNoticias] = useState<Noticia[]>(NOTICIAS_INICIALES);
+  const [posts, setPosts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [busqueda, setBusqueda] = useState("");
-  
-  // Estados de Modales
-  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
-  const [isEditModalOpen, setEditModalOpen] = useState(false);
-  const [noticiaAEditar, setNoticiaAEditar] = useState<Noticia | null>(null);
 
-  // Filtrado
-  const noticiasFiltradas = noticias.filter(noticia => 
-    noticia.titulo.toLowerCase().includes(busqueda.toLowerCase()) ||
-    noticia.autor.toLowerCase().includes(busqueda.toLowerCase())
-  );
+  const [isCreateOpen, setCreateOpen] = useState(false);
+  const [isEditOpen, setEditOpen] = useState(false);
+  const [seleccionado, setSeleccionado] = useState<any>(null);
 
-  // --- CRUD ---
-  const handleCreate = () => setCreateModalOpen(true);
-
-  const guardarNuevaNoticia = (nuevaNoticia: Noticia) => {
-    setNoticias([nuevaNoticia, ...noticias]);
-    setCreateModalOpen(false);
-  };
-
-  const handleEdit = (id: number) => {
-    const noticia = noticias.find(n => n.id === id);
-    if (noticia) {
-      setNoticiaAEditar(noticia);
-      setEditModalOpen(true);
+  // --- 1. CARGAR DATOS ---
+  const cargarPosts = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch('/api/publicaciones?admin=true&limit=100');
+      if (!res.ok) throw new Error("Error al obtener noticias");
+      const data = await res.json();
+      setPosts(data.data || []);
+    } catch (err) {
+      setError("No se pudo sincronizar el blog.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const actualizarNoticia = (noticiaActualizada: Noticia) => {
-    setNoticias(prev => prev.map(n => n.id === noticiaActualizada.id ? noticiaActualizada : n));
-    setEditModalOpen(false);
-    setNoticiaAEditar(null);
-  };
+  useEffect(() => { cargarPosts(); }, []);
 
-  const handleDelete = (id: number) => {
-    if (confirm("¿Estás seguro de eliminar esta noticia?")) {
-      setNoticias(prev => prev.filter(n => n.id !== id));
+  // --- 2. FILTRADO ---
+  const postsFiltrados = useMemo(() => {
+    return posts.filter(p =>
+      (p.tituloNoticia || "").toLowerCase().includes(busqueda.toLowerCase())
+    );
+  }, [busqueda, posts]);
+
+  // --- 3. ACCIONES ---
+  const handleToggleEstado = async (post: any) => {
+    const nuevoEstado = !post.activo;
+
+    // 🕵️ Debug preventivo para Chavez
+    console.log("Cambiando estado de post:", post.idPublicacion, "Autor ID:", post.idAutor);
+
+    const res = await fetch(`/api/publicaciones/${post.idPublicacion}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...post,
+        // 🛡️ Aseguramos que idAutor viaje con el nombre que el Schema espera
+        idAutor: post.idAutor,
+        activo: nuevoEstado
+      })
+    });
+
+    if (res.ok) {
+      await cargarPosts();
+    } else {
+      const error = await res.json();
+      console.error("Fallo al ocultar:", error);
     }
   };
 
-  // Función para alternar visibilidad
-  const toggleVisibilidad = (id: number) => {
-    setNoticias(prev => prev.map(n => 
-      n.id === id ? { ...n, visible: !n.visible } : n
-    ));
-  };
+  if (loading) return <div className="admin-loading-full"><Loader2 className="animate-spin" size={48} /></div>;
 
   return (
-    <div className="admin-noticias-container">
-      
-      {/* --- HEADER --- */}
-      <header className="admin-noticias-header">
-        <div className="header-background"></div>
-        <div className="header-content">
-          <h1 className="header-title">Gestión de Blog y Noticias</h1>
-          <p className="header-subtitle">Administra las publicaciones, consejos y novedades para los padres.</p>
+    <div className="admin-blog-container">
+
+      <header className="admin-header-main">
+        <div className="header-left">
+          <h1>Panel de Control de Blog</h1>
+          <div className="stats-badges">
+            <span className="badge-stat">Artículos: {posts.length}</span>
+            <span className="badge-stat success">Activos: {posts.filter(p => p.activo).length}</span>
+          </div>
         </div>
+        <button className="btn-add-main" onClick={() => setCreateOpen(true)}>
+          <PlusCircle size={20} /> Redactar Noticia
+        </button>
       </header>
 
-      {/* --- TOOLS BAR --- */}
-      <div className="admin-tools-wrapper">
-        <div className="admin-tools-card">
-          <div className="search-section">
-            <div className="search-input-wrapper">
-              <Search size={20} className="search-icon"/>
-              <input 
-                type="text" 
-                placeholder="Buscar noticia por título o autor..." 
-                value={busqueda}
-                onChange={(e) => setBusqueda(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="actions-section">
-            <button className="btn-admin-create" onClick={handleCreate}>
-                <PlusCircle size={20} /> Nueva Publicación
-            </button>
-            <div className="stats-badge">
-                <FileText size={16} /> 
-                <span>{noticias.length} Publicaciones</span>
-            </div>
-          </div>
+      <div className="admin-filters-bar">
+        <div className="search-box">
+          <Search size={18} />
+          <input
+            placeholder="Buscar por título..."
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+          />
         </div>
       </div>
 
-      {/* --- GRID DE NOTICIAS --- */}
-      <main className="admin-noticias-content">
-        {noticiasFiltradas.length > 0 ? (
-          <div className="admin-noticias-grid">
-            {noticiasFiltradas.map((noticia) => (
-              <div key={noticia.id} className={`admin-noticia-wrapper ${!noticia.visible ? 'oculta' : ''}`}>
-                
-                {/* Indicador visual de estado */}
-                {!noticia.visible && <div className="badge-oculto">Oculto al público</div>}
-
-                {/* Tarjeta Visual */}
-                <NoticiaBreveCard
-                  imagenSrc={noticia.imagenSrc}
-                  altTexto={noticia.altTexto}
-                  titulo={noticia.titulo}
-                  bajada={noticia.bajada}
-                  autor={noticia.autor}
-                  fecha={noticia.fecha}
-                  linkVerMas="#"
-                  etiquetas={noticia.etiquetas}
-                />
-
-                {/* Controles Integrados */}
-                <div className="noticia-controls">
-                    {/* Botón Visibilidad */}
-                    <button 
-                        className={`btn-control-noticia visibility ${noticia.visible ? 'active' : 'inactive'}`}
-                        onClick={() => toggleVisibilidad(noticia.id)}
-                        title={noticia.visible ? "Ocultar noticia" : "Mostrar noticia"}
-                    >
-                        {noticia.visible ? <Eye size={18} /> : <EyeOff size={18} />}
-                        {noticia.visible ? "Visible" : "Oculto"}
+      <div className="table-responsive-container">
+        <table className="admin-data-table">
+          <thead>
+            <tr>
+              <th style={{ width: '60px' }}><Hash size={14} /> ID</th>
+              <th style={{ width: '100px' }}>Imagen</th>
+              <th>Título y Resumen</th>
+              <th style={{ width: '200px' }}><User size={14} /> Autor</th>
+              <th style={{ width: '150px' }}><Calendar size={14} /> Fecha</th>
+              <th style={{ width: '120px' }}>Estado</th>
+              <th style={{ width: '100px' }}>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {postsFiltrados.map((p) => (
+              <tr key={p.idPublicacion} className={!p.activo ? 'row-inactive' : ''}>
+                <td className="text-center font-bold">{p.idPublicacion}</td>
+                <td><img src={p.urlImagen || "/logo.png"} className="img-thumb" alt="Post" /></td>
+                <td>
+                  <div className="cell-title">{p.tituloNoticia}</div>
+                  <div className="cell-subtitle">{p.resumenBajada?.substring(0, 80)}...</div>
+                </td>
+                <td>{p.nombreAutor || `ID: ${p.idAutor}`}</td>
+                <td>{p.fechaPublicacion ? new Date(p.fechaPublicacion).toLocaleDateString() : 'S/F'}</td>
+                <td>
+                  <span className={`pill-status ${p.activo ? 'active' : 'hidden'}`}>
+                    {p.activo ? 'Público' : 'Oculto'}
+                  </span>
+                </td>
+                <td>
+                  <div className="actions-flex">
+                    <button className="btn-icon edit" onClick={() => { setSeleccionado(p); setEditOpen(true); }}>
+                      <Edit size={16} />
                     </button>
-
-                    <div className="controls-divider"></div>
-
-                    <button 
-                        className="btn-control-noticia edit" 
-                        onClick={() => handleEdit(noticia.id)}
-                        title="Editar"
-                    >
-                        <Edit size={18} />
+                    <button className="btn-icon toggle" onClick={() => handleToggleEstado(p)}>
+                      {p.activo ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
-                    
-                    <button 
-                        className="btn-control-noticia delete" 
-                        onClick={() => handleDelete(noticia.id)}
-                        title="Eliminar"
-                    >
-                        <Trash2 size={18} />
-                    </button>
-                </div>
-
-              </div>
+                  </div>
+                </td>
+              </tr>
             ))}
-          </div>
-        ) : (
-          <div className="empty-state">No se encontraron noticias.</div>
-        )}
-      </main>
+          </tbody>
+        </table>
+      </div>
 
-      {/* --- MODALES --- */}
-      <CrearNoticiaModal 
-        isOpen={isCreateModalOpen} 
-        onClose={() => setCreateModalOpen(false)} 
-        onSave={guardarNuevaNoticia} 
+      <CrearNoticiaModal
+        isOpen={isCreateOpen}
+        onClose={() => setCreateOpen(false)}
+        onSave={async (nuevo: any) => {
+          const res = await fetch('/api/publicaciones', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(nuevo)
+          });
+          if (res.ok) cargarPosts();
+        }}
       />
 
-      <EditarNoticiaModal 
-        isOpen={isEditModalOpen} 
-        onClose={() => setEditModalOpen(false)} 
-        onSave={actualizarNoticia} 
-        noticia={noticiaAEditar} 
-      />
-
+      {seleccionado && (
+        <EditarNoticiaModal
+          isOpen={isEditOpen}
+          onClose={() => { setEditOpen(false); setSeleccionado(null); }}
+          onSave={async (editado: any) => {
+            const res = await fetch(`/api/publicaciones/${editado.idPublicacion}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(editado)
+            });
+            if (res.ok) cargarPosts();
+          }}
+          noticia={seleccionado}
+        />
+      )}
     </div>
   );
 }

@@ -1,102 +1,89 @@
-// screens/admin/modals/EditarPublicacionModal.tsx
 "use client";
 import React, { useState, useEffect } from 'react';
-import { X, Save, Image as ImageIcon, Tag } from 'lucide-react';
-// Reutilizamos el mismo CSS porque el diseño es idéntico
+import { X, Save, ImageIcon, Tag, User, AlignLeft, Edit3, Loader2, Eye, EyeOff } from 'lucide-react';
 import '../../../styles/Academia/CrearPublicacionModal.css';
 
-interface EditarPublicacionModalProps {
+interface EditarProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (publicacionActualizada: any) => void;
-  publicacion: any; // El objeto que vamos a editar
+  onSave: (data: any) => Promise<void>;
+  guia: any;
 }
 
-export default function EditarPublicacionModal({ 
-  isOpen, 
-  onClose, 
-  onSave, 
-  publicacion 
-}: EditarPublicacionModalProps) {
-  
-  // Estado del formulario
+export default function EditarPublicacionModal({ isOpen, onClose, onSave, guia }: EditarProps) {
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     titulo: '',
     bajada: '',
-    autor: '',
-    fecha: '',
+    descripcionLarga: '',
     imagenSrc: '',
-    etiquetasInput: ''
+    etiquetas: '',
+    idAutor: '',
+    activo: true
   });
 
-  // Cargar datos cuando cambia la publicación o se abre el modal
   useEffect(() => {
-    if (publicacion) {
+    if (guia && isOpen) {
       setFormData({
-        titulo: publicacion.titulo || '',
-        bajada: publicacion.bajada || '',
-        autor: publicacion.autor || '',
-        fecha: publicacion.fecha || '',
-        imagenSrc: publicacion.imagenSrc || '',
-        // Convertimos el array de etiquetas a string separado por comas
-        etiquetasInput: publicacion.etiquetas ? publicacion.etiquetas.join(', ') : ''
+        titulo: guia.titulo || '',
+        bajada: guia.bajada || '',
+        descripcionLarga: guia.descripcionLarga || '',
+        imagenSrc: guia.imagenSrc || '',
+        etiquetas: guia.etiquetas || '',
+        idAutor: guia.idAutor || '',
+        activo: guia.activo ?? true
       });
     }
-  }, [publicacion, isOpen]);
+  }, [guia, isOpen]);
 
   if (!isOpen) return null;
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Procesar etiquetas de vuelta a array
-    const etiquetasArray = formData.etiquetasInput
-      .split(',')
-      .map(tag => tag.trim())
-      .filter(tag => tag !== '');
-
-    // Objeto actualizado (Mantenemos el ID original)
-    const publicacionActualizada = {
-      ...publicacion, // Mantener propiedades que no editamos (como id)
-      titulo: formData.titulo,
-      bajada: formData.bajada,
-      autor: formData.autor,
-      fecha: formData.fecha,
-      imagenSrc: formData.imagenSrc,
-      altTexto: formData.titulo, // Actualizamos altTexto
-      etiquetas: etiquetasArray
-    };
-
-    onSave(publicacionActualizada);
-    onClose();
+    setLoading(true);
+    try {
+      // Enviamos el ID original + los datos mapeados
+      await onSave({ 
+        id_guia: guia.id_guia, 
+        ...formData 
+      });
+      onClose();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="modal-overlay">
       <div className="modal-container">
-        
         <div className="modal-header">
-          {/* Título diferente para diferenciar del creador */}
-          <h2 className="modal-title">Editar Publicación</h2>
-          <button className="btn-close" onClick={onClose}>
-            <X size={24} />
-          </button>
+          <h2 className="modal-title"><Edit3 size={20} /> Editar Guía</h2>
+          <button className="btn-close" onClick={onClose}><X size={24} /></button>
         </div>
 
         <form onSubmit={handleSubmit} className="modal-form">
-          
+          <div className="form-group">
+            <label>Estado de Visibilidad</label>
+            <div className="status-toggle-container">
+               <button 
+                  type="button" 
+                  className={`btn-status-toggle ${formData.activo ? 'active' : 'hidden'}`}
+                  onClick={() => setFormData({...formData, activo: !formData.activo})}
+               >
+                  {formData.activo ? <Eye size={16}/> : <EyeOff size={16}/>}
+                  {formData.activo ? "Visible en la Web" : "Oculto (Borrador)"}
+               </button>
+            </div>
+          </div>
+
           <div className="form-group">
             <label>Título</label>
             <input 
               type="text" 
-              name="titulo" 
               value={formData.titulo} 
-              onChange={handleChange} 
+              onChange={(e) => setFormData({...formData, titulo: e.target.value})} 
               required 
             />
           </div>
@@ -104,64 +91,50 @@ export default function EditarPublicacionModal({
           <div className="form-group">
             <label>Descripción Corta</label>
             <textarea 
-              name="bajada" 
               value={formData.bajada} 
-              onChange={handleChange} 
-              rows={3}
+              onChange={(e) => setFormData({...formData, bajada: e.target.value})} 
+              rows={2}
+              required 
+            />
+          </div>
+
+          <div className="form-group">
+            <label><AlignLeft size={16}/> Contenido Completo</label>
+            <textarea 
+              value={formData.descripcionLarga} 
+              onChange={(e) => setFormData({...formData, descripcionLarga: e.target.value})} 
+              rows={8}
               required 
             />
           </div>
 
           <div className="form-row">
             <div className="form-group half">
-              <label>Autor</label>
+              <label><User size={16}/> ID Autor</label>
               <input 
-                type="text" 
-                name="autor" 
-                value={formData.autor} 
-                onChange={handleChange} 
+                type="number" 
+                value={formData.idAutor} 
+                onChange={(e) => setFormData({...formData, idAutor: e.target.value})} 
+                required 
               />
             </div>
             <div className="form-group half">
-              <label>Fecha</label>
+              <label><Tag size={16}/> Etiquetas</label>
               <input 
                 type="text" 
-                name="fecha" 
-                value={formData.fecha} 
-                onChange={handleChange} 
+                value={formData.etiquetas} 
+                onChange={(e) => setFormData({...formData, etiquetas: e.target.value})} 
               />
             </div>
           </div>
 
-          <div className="form-group">
-            <label><ImageIcon size={16}/> URL Imagen</label>
-            <input 
-              type="text" 
-              name="imagenSrc" 
-              value={formData.imagenSrc} 
-              onChange={handleChange} 
-            />
-          </div>
-
-          <div className="form-group">
-            <label><Tag size={16}/> Etiquetas (Separadas por comas)</label>
-            <input 
-              type="text" 
-              name="etiquetasInput" 
-              value={formData.etiquetasInput} 
-              onChange={handleChange} 
-            />
-          </div>
-
           <div className="modal-footer">
-            <button type="button" className="btn-cancel" onClick={onClose}>
-              Cancelar
-            </button>
-            <button type="submit" className="btn-save">
-              <Save size={18} /> Guardar Cambios
+            <button type="button" className="btn-cancel" onClick={onClose}>Cancelar</button>
+            <button type="submit" className="btn-save" disabled={loading}>
+              {loading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+              {loading ? " Guardando..." : " Guardar Cambios"}
             </button>
           </div>
-
         </form>
       </div>
     </div>

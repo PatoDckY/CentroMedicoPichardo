@@ -1,118 +1,129 @@
-// screens/admin/modals/ServicioModal.tsx
 "use client";
 import React, { useState, useEffect } from 'react';
-import { X, Save, Stethoscope, MapPin, FileText, Image as ImageIcon } from 'lucide-react';
-import '../../../styles/Servicios/ServicioModal.css'; // Reutilizamos tu CSS de modales existente
+import { X, Save, Stethoscope, MapPin, FileText, Image as ImageIcon, Layout } from 'lucide-react';
+import '../../../styles/Servicios/ServicioModal.css';
 
-// Importamos el tipo desde el padre o lo definimos aquí
-// Actualizamos el Tipo para incluir 'tipo'
-type Servicio = {
-  id?: number;
-  altTexto: string;
-  titulo: string;
-  descripcion: string;
-  ubicacion: string;
-  linkVerMas: string;
-  imagenSrc?: string;
-  tipo?: 'vertical' | 'horizontal'; // NUEVO CAMPO
-};
-
-interface ServicioModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (servicio: any) => void;
-  servicio: Servicio | null;
-  tipoPreseleccionado?: 'vertical' | 'horizontal'; // NUEVA PROP
-}
-
-export default function ServicioModal({ isOpen, onClose, onSave, servicio, tipoPreseleccionado }: ServicioModalProps) {
+export default function ServicioModal({ isOpen, onClose, onSave, servicio, tipoPreseleccionado }: any) {
   const [formData, setFormData] = useState({
-    titulo: '',
+    tituloServicio: '',
     descripcion: '',
     ubicacion: '',
-    imagenSrc: '',
-    altTexto: ''
+    urlImage: '',
+    textoAlt: '',
+    disenoTipo: 'vertical',
+    activo: true
   });
 
   useEffect(() => {
-    if (servicio) {
+    if (servicio && isOpen) {
       setFormData({
-        titulo: servicio.titulo,
-        descripcion: servicio.descripcion,
-        ubicacion: servicio.ubicacion,
-        imagenSrc: servicio.imagenSrc || '',
-        altTexto: servicio.altTexto
+        tituloServicio: servicio.tituloServicio || '',
+        descripcion: servicio.descripcion || '',
+        ubicacion: servicio.ubicacion || '',
+        urlImage: servicio.urlImage || '',
+        textoAlt: servicio.textoAlt || '',
+        disenoTipo: servicio.disenoTipo || 'vertical',
+        activo: servicio.activo ?? true
       });
     } else {
-      setFormData({ titulo: '', descripcion: '', ubicacion: '', imagenSrc: '', altTexto: '' });
+      setFormData({ 
+        tituloServicio: '', 
+        descripcion: '', 
+        ubicacion: 'Centro Médico Pichardo', 
+        urlImage: '', 
+        textoAlt: '',
+        disenoTipo: tipoPreseleccionado || 'vertical',
+        activo: true
+      });
     }
-  }, [servicio, isOpen]);
+  }, [servicio, isOpen, tipoPreseleccionado]);
 
   if (!isOpen) return null;
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const datosFinales = {
-      ...servicio,
-      ...formData,
-      linkVerMas: "#",
-      // Si estamos editando, mantenemos el tipo original. Si es nuevo, usamos el preseleccionado.
-      tipo: servicio?.tipo || tipoPreseleccionado || 'vertical' 
-    };
-    onSave(datosFinales);
+    // Enviamos los datos limpios a la función onSave del padre
+    onSave({ 
+      ...servicio, // Mantiene el idServicio si existe
+      ...formData 
+    });
   };
 
-  // ... (El resto del return y formulario se mantiene IGUAL) ...
-  // Solo asegúrate de usar el componente como lo definimos aquí.
   return (
-      // ... contenido del modal ...
-      <div className="service-modal-overlay">
-          <div className="service-modal-container">
-              {/* ... Header y Formulario igual que antes ... */}
-              <div className="service-modal-header">
-                  <h2 className="service-modal-title">
-                      {/* Mostrar qué tipo se está creando */}
-                      <Stethoscope size={22}/> 
-                      {servicio ? 'Editar Servicio' : `Nuevo Servicio (${tipoPreseleccionado === 'vertical' ? 'Vertical' : 'Horizontal'})`}
-                  </h2>
-                  <button className="btn-close-service" onClick={onClose}><X size={24} /></button>
-              </div>
-              
-              <form onSubmit={handleSubmit} className="service-modal-form">
-                  {/* ... inputs ... */}
-                  <div className="input-group">
-                    <label>Título del Servicio</label>
-                    <input name="titulo" value={formData.titulo} onChange={handleChange} required />
-                  </div>
-                  <div className="input-group">
-                    <label><FileText size={16}/> Descripción</label>
-                    <textarea name="descripcion" value={formData.descripcion} onChange={handleChange} rows={4} required />
-                  </div>
-                  <div className="input-group">
-                    <label><MapPin size={16}/> Ubicación</label>
-                    <input name="ubicacion" value={formData.ubicacion} onChange={handleChange} />
-                  </div>
-                  <div className="form-row-service">
-                    <div className="input-group">
-                       <label><ImageIcon size={16}/> URL Imagen</label>
-                       <input name="imagenSrc" value={formData.imagenSrc} onChange={handleChange} />
-                    </div>
-                    <div className="input-group">
-                       <label>Texto Alt</label>
-                       <input name="altTexto" value={formData.altTexto} onChange={handleChange} />
-                    </div>
-                  </div>
-                  <div className="service-modal-footer">
-                    <button type="button" className="btn-service-cancel" onClick={onClose}>Cancelar</button>
-                    <button type="submit" className="btn-service-save"><Save size={18}/> Guardar</button>
-                  </div>
-              </form>
+    <div className="service-modal-overlay">
+      <div className="service-modal-container">
+        <div className="service-modal-header">
+          <h2 className="service-modal-title">
+            <Stethoscope size={22}/> 
+            {servicio ? 'Editar Servicio' : `Nuevo Servicio (${formData.disenoTipo})`}
+          </h2>
+          <button className="btn-close-service" onClick={onClose}><X size={24} /></button>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="service-modal-form">
+          <div className="input-group">
+            <label>Título del Servicio</label>
+            <input 
+              value={formData.tituloServicio} 
+              onChange={e => setFormData({...formData, tituloServicio: e.target.value})} 
+              required 
+            />
           </div>
+
+          <div className="input-group">
+            <label><FileText size={16}/> Descripción</label>
+            <textarea 
+              value={formData.descripcion} 
+              onChange={e => setFormData({...formData, descripcion: e.target.value})} 
+              rows={3} 
+              required 
+            />
+          </div>
+
+          <div className="form-row-service">
+            <div className="input-group">
+              <label><MapPin size={16}/> Ubicación</label>
+              <input 
+                value={formData.ubicacion} 
+                onChange={e => setFormData({...formData, ubicacion: e.target.value})} 
+              />
+            </div>
+            <div className="input-group">
+              <label><Layout size={16}/> Diseño</label>
+              <select 
+                value={formData.disenoTipo} 
+                onChange={e => setFormData({...formData, disenoTipo: e.target.value})}
+              >
+                <option value="vertical">Vertical (Grid)</option>
+                <option value="horizontal">Horizontal (Banner)</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="form-row-service">
+            <div className="input-group">
+               <label><ImageIcon size={16}/> URL Imagen</label>
+               <input 
+                 value={formData.urlImage} 
+                 onChange={e => setFormData({...formData, urlImage: e.target.value})} 
+                 placeholder="/images/servicio.jpg"
+               />
+            </div>
+            <div className="input-group">
+               <label>Texto Alt (SEO)</label>
+               <input 
+                 value={formData.textoAlt} 
+                 onChange={e => setFormData({...formData, textoAlt: e.target.value})} 
+               />
+            </div>
+          </div>
+
+          <div className="service-modal-footer">
+            <button type="button" className="btn-service-cancel" onClick={onClose}>Cancelar</button>
+            <button type="submit" className="btn-service-save"><Save size={18}/> Guardar Cambios</button>
+          </div>
+        </form>
       </div>
+    </div>
   );
 }

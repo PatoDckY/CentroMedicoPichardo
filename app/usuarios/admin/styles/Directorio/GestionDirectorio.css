@@ -1,306 +1,183 @@
-/* styles/admin/GestionDirectorio.css */
-
+/* --- VARIABLES --- */
 :root {
-    --adm-azul: #0A3D62;
-    --adm-blanco: #FFFFFF;
-    --adm-fondo: #F8FAFC;
-    --adm-borde: #E2E8F0;
-    --adm-texto: #334155;
-    --adm-rojo: #EF4444;
-    --adm-amarillo: #FFC300;
+  --adm-azul: #0a3d62;
+  --adm-success: #10b981;
+  --adm-borde: #e2e8f0;
 }
 
 .admin-directorio-container {
-    background-color: var(--adm-fondo);
-    min-height: 100vh;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    padding-bottom: 6rem;
+  padding: 2rem;
+  background-color: #f4f7fa;
+  min-height: 100vh;
 }
 
-/* --- HEADER --- */
-.admin-directorio-header {
-    position: relative;
-    height: 240px;
-    background-color: var(--adm-azul);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    color: var(--adm-blanco);
-    padding-bottom: 2rem;
+/* HEADER Y TÍTULOS */
+.admin-header-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  background: white;
+  padding: 1.5rem 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-.header-background {
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: linear-gradient(145deg, #0F172A 0%, #0A3D62 100%);
-    opacity: 0.95;
+.header-left h1 {
+  font-size: 1.8rem;
+  color: var(--adm-azul);
+  font-weight: 800;
+  margin: 0;
 }
 
-.header-content {
-    position: relative;
-    z-index: 2;
-    margin-top: -20px;
+.stats-badges {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
 }
 
-.header-title {
-    font-size: 2.5rem;
-    font-weight: 800;
-    margin-bottom: 0.8rem;
-    letter-spacing: -0.5px;
-    color: #FFFFFF; /* Asegurado blanco puro */
+.badge-stat {
+  padding: 4px 12px;
+  background: #f1f5f9;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #475569;
 }
 
-.header-subtitle {
-    font-size: 1.1rem;
-    opacity: 0.9;
-    font-weight: 300;
-    color: #F1F5F9;
+.badge-stat.success {
+  background: #e6fffa;
+  color: var(--adm-success);
 }
 
-/* --- TOOLS BAR --- */
-.admin-tools-wrapper {
-    margin-top: -50px;
-    position: relative;
-    z-index: 10;
-    padding: 0 20px;
-    display: flex;
-    justify-content: center;
+/* BOTÓN REGISTRAR */
+.btn-add-main {
+  background: var(--adm-azul);
+  color: white;
+  border: none; /* Elimina el borde negro que se ve en tu imagen */
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: transform 0.2s;
 }
 
-.admin-tools-card {
-    background-color: var(--adm-blanco);
-    width: 100%;
-    max-width: 1100px;
-    border-radius: 16px;
-    padding: 1.5rem 2rem;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-    display: flex;
-    flex-wrap: wrap;
-    gap: 30px;
-    justify-content: space-between;
-    align-items: center;
-    border: 1px solid rgba(0,0,0,0.03);
+.btn-add-main:hover {
+  transform: translateY(-2px);
+  background: #062a45;
 }
 
-/* --- CORRECCIÓN BUSCADOR --- */
-.search-section {
-    display: flex;
-    /* Espacio generoso para evitar que se encimen */
-    gap: 20px; 
-    align-items: center;
-    flex: 1; /* Ocupa espacio disponible */
-    min-width: 650px;
+/* BARRA DE FILTROS */
+.admin-filters-bar {
+  background: white;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--adm-borde);
 }
 
-.search-input-wrapper {
-    flex-grow: 1; /* El input crece para llenar el espacio */
-    position: relative;
-    max-width: 650px; /* Limita el largo del input para que no sea enorme */
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #cbd5e0;
+  padding: 10px 15px;
+  border-radius: 10px;
+  max-width: 450px;
 }
 
-.search-icon {
-    position: absolute;
-    left: 14px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #94A3B8;
+.search-box input {
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 1rem;
 }
 
-.search-input-wrapper input {
-    width: 80%;
-    padding: 0.8rem 1rem 0.8rem 2.8rem;
-    border: 1px solid var(--adm-borde);
-    border-radius: 10px;
-    font-size: 0.95rem;
-    outline: none;
-    transition: all 0.2s;
-    background-color: #F8FAFC;
+/* TABLA PROFESIONAL */
+.table-responsive-container {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid var(--adm-borde);
+  overflow: hidden;
 }
 
-.search-input-wrapper input:focus {
-    background-color: #fff;
-    border-color: var(--adm-azul);
-    box-shadow: 0 0 0 3px rgba(10, 61, 98, 0.1);
+.admin-data-table {
+  width: 100%;
+  border-collapse: collapse;
 }
 
-.btn-filters {
-    /* Evita que el botón se aplaste */
-    flex-shrink: 0; 
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 0.8rem 1.5rem;
-    border: 1px solid var(--adm-borde);
-    background: white;
-    border-radius: 10px;
-    cursor: pointer;
-    color: var(--adm-texto);
-    font-weight: 600;
-    transition: background 0.2s;
-    white-space: nowrap;
+.admin-data-table th {
+  background: #f8fafc;
+  padding: 1rem;
+  text-align: left;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #64748b;
+  border-bottom: 2px solid var(--adm-borde);
 }
 
-.btn-filters:hover { background-color: #F1F5F9; }
-
-.actions-section {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    justify-content: flex-end;
+.admin-data-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
 }
 
-.btn-admin-create {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background-color: var(--adm-azul);
-    color: white;
-    border: none;
-    padding: 0.8rem 1.5rem;
-    border-radius: 10px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: transform 0.1s, background 0.2s;
-    box-shadow: 0 4px 12px rgba(10, 61, 98, 0.2);
-    white-space: nowrap;
+/* FOTOS CIRCULARES */
+.img-thumb {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--adm-borde);
 }
 
-.btn-admin-create:hover { 
-    background-color: #0F172A;
-    transform: translateY(-1px);
+.cell-title {
+  font-weight: 700;
+  color: #0f172a;
 }
 
-.stats-badge {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background-color: #EFF6FF;
-    padding: 0.6rem 1.2rem;
-    border-radius: 30px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--adm-azul);
-    border: 1px solid #DBEAFE;
-    white-space: nowrap;
+.cell-subtitle {
+  font-size: 0.85rem;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
-/* --- GRID DE CONTENIDO Y TARJETAS SIMÉTRICAS --- */
-.admin-directorio-content {
-    max-width: 1200px;
-    margin: 4rem auto;
-    padding: 0 20px;
+/* PILLS DE ESTADO */
+.pill-status {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
 }
 
-.admin-medicos-grid {
-    display: grid;
-    /* Tarjetas compactas (300px) que no se estiran infinitamente */
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 30px;
-    justify-content: center;
-    /* Si hay pocas tarjetas, que se queden a la izquierda o centro según prefieras. */
-    /* justify-items: center; */ 
+.pill-status.active { background: #dcfce7; color: #166534; }
+.pill-status.hidden { background: #f1f5f9; color: #475569; }
+
+/* ACCIONES */
+.actions-flex {
+  display: flex;
+  gap: 8px;
 }
 
-/* Wrapper de la tarjeta (Columna Flexible) */
-.admin-medico-wrapper {
-    display: flex;
-    flex-direction: column;
-    /* Altura del 100% del grid row para igualar alturas */
-    height: 100%; 
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    border: 1px solid rgba(0,0,0,0.05);
-    overflow: hidden;
-    transition: transform 0.2s;
-    max-width: 350px; /* Límite de ancho para que no se vea gigante */
-    margin: 0 auto;   /* Centrado en su celda */
-    width: 100%;
+.btn-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--adm-borde);
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #64748b;
 }
 
-.admin-medico-wrapper:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 30px rgba(0,0,0,0.1);
-}
-
-/* TRUCO DE ALINEACIÓN:
-   Hacemos que el componente <MedicoCard> (el div superior) crezca 
-   para ocupar todo el espacio disponible, empujando los controles al fondo.
-*/
-.admin-medico-wrapper > div:first-child {
-    flex-grow: 1; /* Esto es la clave para la simetría */
-    display: flex;
-    flex-direction: column;
-    
-    /* Quitamos estilos visuales de la tarjeta original para fusionarla */
-    box-shadow: none !important;
-    border: none !important;
-    border-radius: 0 !important;
-    width: 100% !important;
-    padding-bottom: 0 !important;
-}
-
-/* Controles integrados en la parte inferior (Footer fijo) */
-.medico-controls {
-    margin-top: auto; /* Seguridad extra para empujar al fondo */
-    display: flex;
-    border-top: 1px solid var(--adm-borde);
-    background-color: #FFFFFF;
-}
-
-.btn-control-medico {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 1rem; /* Botones más altos y clicables */
-    font-weight: 600;
-    font-size: 0.9rem;
-    cursor: pointer;
-    border: none;
-    background: transparent;
-    transition: all 0.2s;
-}
-
-.btn-control-medico.edit {
-    color: #64748B;
-    border-right: 1px solid var(--adm-borde);
-}
-
-.btn-control-medico.edit:hover {
-    background-color: #F8FAFC;
-    color: #0284C7;
-}
-
-.btn-control-medico.delete {
-    color: #64748B;
-}
-
-.btn-control-medico.delete:hover {
-    background-color: #FEF2F2;
-    color: var(--adm-rojo);
-}
-
-/* --- RESPONSIVE --- */
-@media (max-width: 900px) {
-    .admin-tools-card {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 20px;
-        padding: 1.5rem;
-    }
-    
-    .search-section, .actions-section {
-        width: 100%;
-        flex-wrap: wrap;
-    }
-    
-    .search-input-wrapper {
-        max-width: 100%; /* En móvil sí ocupa todo el ancho */
-    }
-
-    .btn-filters { width: 100%; justify-content: center; }
-    .actions-section { justify-content: space-between; }
+.btn-icon:hover {
+  background: #f8fafc;
+  color: var(--adm-azul);
 }

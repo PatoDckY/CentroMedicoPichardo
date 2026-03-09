@@ -1,182 +1,241 @@
-// screens/admin/GestionDirectorio.tsx
 "use client";
-import React, { useState } from 'react';
-import { Search, SlidersHorizontal, PlusCircle, Users, Edit, Trash2 } from 'lucide-react';
-import MedicoCard from '../../../public/components/cards/MedicoCard'; // Reutilizamos la tarjeta visual
-import CrearMedicoModal from './modals/CrearMedicoModal'; // (Debes crear este modal similar al de publicaciones)
-import EditarMedicoModal from './modals/EditarMedicoModal'; // (Debes crear este modal similar al de publicaciones)
-import '../../styles/Directorio/GestionDirectorio.css'; // CSS Específico de Admin
+import React, { useState, useEffect, useMemo } from 'react';
+import { 
+  Search, PlusCircle, Edit, EyeOff, Eye, 
+  Loader2, Hash, User, Stethoscope, AlertCircle, Trash2 
+} from 'lucide-react';
 
-// --- DATOS DE EJEMPLO ---
-const MEDICOS_INICIALES = [
-  {
-    id: 1,
-    imagenSrc: "/Pichardo.jpg",
-    nombre: "Dr. Francisco Javier Moreno Pichardo",
-    especialidad: "Pediatría",
-    hospital: "Centro Medico Pichardo",
-    torre: "Principal",
-    consultorio: "101",
-    direccion: "Calle Alcatraz colonia los prados...",
-    linkVerMas: "#",
-  },
-  {
-    id: 2,
-    imagenSrc: "/logo.png", // Placeholder
-    nombre: "Dra. Ana Torres",
-    especialidad: "Psicología Infantil",
-    hospital: "Centro Medico Pichardo",
-    torre: "B",
-    consultorio: "205",
-    direccion: "Av. Revolución...",
-    linkVerMas: "#",
-  }
-];
+// ✅ Componentes de Modales
+import CrearMedicoModal from './modals/CrearMedicoModal'; 
+import EditarMedicoModal from './modals/EditarMedicoModal';
+
+// ✅ Estilos Unificados
+import '../../styles/Directorio/GestionDirectorio.css'; 
+
+// 1. TIPO SINCRONIZADO CON EL SCHEMA
+type Medico = {
+  idMedico: number;
+  nombreCompleto: string;
+  especialidad: string;
+  hospitalClinica: string;
+  direccion: string | null;
+  urlFoto: string | null;
+  activo: boolean; // 👈 Campo clave para visibilidad
+};
 
 export default function GestionDirectorio() {
-    const [medicos, setMedicos] = useState(MEDICOS_INICIALES);
-    const [busqueda, setBusqueda] = useState("");
-    const [isCreateModalOpen, setCreateModalOpen] = useState(false);
-    const [isEditModalOpen, setEditModalOpen] = useState(false);
-    const [medicoAEditar, setMedicoAEditar] = useState<any>(null);
+  // --- ESTADOS ---
+  const [medicos, setMedicos] = useState<Medico[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [busqueda, setBusqueda] = useState("");
 
-    // --- FILTRADO ---
-    const medicosFiltrados = medicos.filter(medico => 
-        medico.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-        medico.especialidad.toLowerCase().includes(busqueda.toLowerCase())
+  // Estados de Modales
+  const [isCreateOpen, setCreateOpen] = useState(false);
+  const [isEditOpen, setEditOpen] = useState(false);
+  const [seleccionado, setSeleccionado] = useState<Medico | null>(null);
+
+  // --- 1. CARGAR DATOS (Modo Admin para ver ocultos) ---
+  const cargarMedicos = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      // 🛡️ Flag ?admin=true para saltar el filtro de 'solo activos'
+      const res = await fetch('/api/medicos?admin=true');
+      if (!res.ok) throw new Error("No se pudo sincronizar el directorio.");
+      const data = await res.json();
+      
+      // Manejo de la respuesta si viene en formato { data: [] } o []
+      const lista = Array.isArray(data) ? data : (data.data || []);
+      setMedicos(lista);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { cargarMedicos(); }, []);
+
+  // --- 2. FILTRADO ---
+  const medicosFiltrados = useMemo(() => {
+    return medicos.filter(m => 
+      m.nombreCompleto.toLowerCase().includes(busqueda.toLowerCase()) ||
+      m.especialidad.toLowerCase().includes(busqueda.toLowerCase())
     );
+  }, [medicos, busqueda]);
 
-    // --- FUNCIONES CRUD ---
-    const handleCreate = () => setCreateModalOpen(true);
+  // --- 3. FUNCIONES CRUD ---
 
-    const guardarNuevoMedico = (nuevoMedico: any) => {
-        setMedicos([...medicos, nuevoMedico]);
-        setCreateModalOpen(false);
-    };
+  // Alternar Visibilidad (PUT)
+  const handleToggleEstado = async (medico: Medico) => {
+    const nuevoEstado = !medico.activo;
+    try {
+      const res = await fetch(`/api/medicos/${medico.idMedico}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...medico, activo: nuevoEstado }),
+      });
+      if (res.ok) await cargarMedicos();
+    } catch (err) {
+      console.error("Error al cambiar visibilidad:", err);
+    }
+  };
 
-    const handleEdit = (id: number) => {
-        const medico = medicos.find(m => m.id === id);
-        if (medico) {
-            setMedicoAEditar(medico);
-            setEditModalOpen(true);
-        }
-    };
+  // Eliminar (DELETE Físico - Opcional)
+  const handleDelete = async (id: number) => {
+    if (confirm("¿Estás seguro de eliminar permanentemente a este médico? Esto podría afectar sus publicaciones en el blog.")) {
+      try {
+        const res = await fetch(`/api/medicos/${id}`, { method: 'DELETE' });
+        if (res.ok) await cargarMedicos();
+      } catch (err) {
+        console.error("Error al eliminar:", err);
+      }
+    }
+  };
 
-    const actualizarMedico = (medicoActualizado: any) => {
-        setMedicos(prev => prev.map(m => m.id === medicoActualizado.id ? medicoActualizado : m));
-        setEditModalOpen(false);
-        setMedicoAEditar(null);
-    };
+  if (loading) return (
+    <div className="admin-loading-full">
+      <Loader2 className="animate-spin" size={48} color="#0a3d62" />
+      <p>Sincronizando facultad médica...</p>
+    </div>
+  );
 
-    const handleDelete = (id: number) => {
-        if (confirm("¿Estás seguro de eliminar a este médico del directorio?")) {
-            setMedicos(prev => prev.filter(m => m.id !== id));
-        }
-    };
-
-    return (
-        <div className="admin-directorio-container">
-            
-            {/* --- 1. HEADER DE GESTIÓN --- */}
-            <header className="admin-directorio-header">
-                <div className="header-background"></div>
-                <div className="header-content">
-                    <h1 className="header-title">Gestión de Directorio Médico</h1>
-                    <p className="header-subtitle">Administra el catálogo de especialistas visibles para los pacientes.</p>
-                </div>
-            </header>
-
-            {/* --- 2. BARRA DE HERRAMIENTAS Y BÚSQUEDA --- */}
-            <div className="admin-tools-wrapper">
-                <div className="admin-tools-card">
-                    
-                    {/* Buscador */}
-                    <div className="search-section">
-                        <div className="search-input-wrapper">
-                            <Search size={20} className="search-icon"/>
-                            <input 
-                                type="text" 
-                                placeholder="Buscar médico por nombre o especialidad..." 
-                                value={busqueda}
-                                onChange={(e) => setBusqueda(e.target.value)}
-                            />
-                        </div>
-                        <button className="btn-filters">
-                            <SlidersHorizontal size={18} /> Filtros
-                        </button>
-                    </div>
-
-                    {/* Acciones Admin */}
-                    <div className="actions-section">
-                        <button className="btn-admin-create" onClick={handleCreate}>
-                            <PlusCircle size={20} /> Nuevo Médico
-                        </button>
-                        <div className="stats-badge">
-                            <Users size={16} /> 
-                            <span>{medicos.length} Registrados</span>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
-            {/* ... dentro del return ... */}
-            <main className="admin-directorio-content">
-                {medicosFiltrados.length > 0 ? (
-                    <div className="admin-medicos-grid">
-                        {medicosFiltrados.map(medico => (
-                            // El wrapper tiene la sombra y el borde redondeado global
-                            <div key={medico.id} className="admin-medico-wrapper">
-                                
-                                {/* La tarjeta visual (sin lógica de click) */}
-                                <MedicoCard 
-                                    imagenSrc={medico.imagenSrc}
-                                    nombre={medico.nombre}
-                                    especialidad={medico.especialidad}
-                                    hospital={medico.hospital}
-                                    direccion={medico.direccion}
-                                    linkVerMas="#" 
-                                />
-
-                                {/* Los controles ahora parecen el pie de la tarjeta */}
-                                <div className="medico-controls">
-                                    <button 
-                                        className="btn-control-medico edit"
-                                        onClick={() => handleEdit(medico.id)}
-                                    >
-                                        <Edit size={18} /> Editar
-                                    </button>
-                                    <button 
-                                        className="btn-control-medico delete"
-                                        onClick={() => handleDelete(medico.id)}
-                                    >
-                                        <Trash2 size={18} /> Eliminar
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="empty-state">No se encontraron médicos.</div>
-                )}
-            </main>
-
-            {/* --- MODALES --- */}
-            {/* Aquí irían tus componentes CrearMedicoModal y EditarMedicoModal */}
-            {/* <CrearMedicoModal isOpen={isCreateModalOpen} onClose={() => setCreateModalOpen(false)} onSave={guardarNuevoMedico} /> */}
-            {/* <EditarMedicoModal isOpen={isEditModalOpen} onClose={() => setEditModalOpen(false)} onSave={actualizarMedico} medico={medicoAEditar} /> */}
-            <CrearMedicoModal 
-                isOpen={isCreateModalOpen} 
-                onClose={() => setCreateModalOpen(false)} 
-                onSave={guardarNuevoMedico} 
-            />
-
-            <EditarMedicoModal 
-                isOpen={isEditModalOpen} 
-                onClose={() => setEditModalOpen(false)} 
-                onSave={actualizarMedico} 
-                medico={medicoAEditar} 
-            />
+  return (
+    <div className="admin-cursos-container"> {/* Reutilizamos contenedor global */}
+      
+      {/* CABECERA CON STATS */}
+      <header className="admin-header-main">
+        <div className="header-left">
+          <h1>Gestión de Facultad Médica</h1>
+          <div className="stats-badges">
+            <span className="badge-stat">Total: {medicos.length}</span>
+            <span className="badge-stat success">Activos: {medicos.filter(m => m.activo).length}</span>
+          </div>
         </div>
-    );
+        <button className="btn-add-main" onClick={() => setCreateOpen(true)}>
+          <PlusCircle size={20} /> Registrar Nuevo Médico
+        </button>
+      </header>
+
+      {/* FILTROS */}
+      <div className="admin-filters-bar">
+        <div className="search-box">
+          <Search size={18} />
+          <input 
+            placeholder="Buscar por nombre o especialidad..." 
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {error && <div className="admin-error-alert"><AlertCircle size={20} /> {error}</div>}
+
+      {/* TABLA DE GESTIÓN */}
+      <div className="table-responsive-container">
+        <table className="admin-data-table">
+          <thead>
+            <tr>
+              <th style={{ width: '60px' }}><Hash size={14}/> ID</th>
+              <th style={{ width: '100px' }}>Foto</th>
+              <th>Información del Médico</th>
+              <th>Hospital / Clínica</th>
+              <th style={{ width: '120px' }}>Estado</th>
+              <th style={{ width: '120px' }}>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {medicosFiltrados.length > 0 ? (
+              medicosFiltrados.map((m) => (
+                <tr key={m.idMedico} className={!m.activo ? 'row-inactive' : ''}>
+                  <td className="text-center font-bold">{m.idMedico}</td>
+                  <td>
+                    <img 
+                      src={m.urlFoto || "/default-doctor.jpg"} 
+                      className="img-thumb" 
+                      alt="dr" 
+                    />
+                  </td>
+                  <td>
+                    <div className="cell-title">{m.nombreCompleto}</div>
+                    <div className="cell-subtitle"><Stethoscope size={12}/> {m.especialidad}</div>
+                  </td>
+                  <td>{m.hospitalClinica || "Centro Médico Pichardo"}</td>
+                  <td>
+                    <span className={`pill-status ${m.activo ? 'active' : 'hidden'}`}>
+                      {m.activo ? 'Visible' : 'Oculto'}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="actions-flex">
+                      <button 
+                        className="btn-icon edit" 
+                        title="Editar"
+                        onClick={() => { setSeleccionado(m); setEditOpen(true); }}
+                      >
+                        <Edit size={16} />
+                      </button>
+                      <button 
+                        className="btn-icon toggle" 
+                        title={m.activo ? "Ocultar del directorio" : "Mostrar en el directorio"}
+                        onClick={() => handleToggleEstado(m)}
+                      >
+                        {m.activo ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                      <button 
+                        className="btn-icon delete" 
+                        title="Eliminar permanentemente"
+                        onClick={() => handleDelete(m.idMedico)}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={6} className="empty-table-msg">
+                   <User size={40} />
+                   <p>No se encontraron médicos registrados.</p>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* --- MODALES --- */}
+
+      <CrearMedicoModal 
+        isOpen={isCreateOpen} 
+        onClose={() => setCreateOpen(false)} 
+        onSave={async (nuevo: any) => {
+          const res = await fetch('/api/medicos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(nuevo)
+          });
+          if (res.ok) await cargarMedicos();
+        }} 
+      />
+
+      {seleccionado && (
+        <EditarMedicoModal 
+          isOpen={isEditOpen} 
+          onClose={() => { setEditOpen(false); setSeleccionado(null); }} 
+          onSave={async (editado: any) => {
+            const res = await fetch(`/api/medicos/${editado.idMedico}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(editado)
+            });
+            if (res.ok) await cargarMedicos();
+          }} 
+          medico={seleccionado} 
+        />
+      )}
+    </div>
+  );
 }

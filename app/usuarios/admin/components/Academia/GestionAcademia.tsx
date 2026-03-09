@@ -1,169 +1,242 @@
-// screens/admin/GestionAcademia.tsx
 "use client";
-import React, { useState } from 'react';
-import { PlusCircle, Edit, Trash2, FileText } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { 
+  PlusCircle, Edit, EyeOff, Eye, Loader2, 
+  Search, AlertCircle, Newspaper, Calendar, User, Hash 
+} from 'lucide-react';
 
-// Componentes UI
-import NoticiaBreveCard from '../../../public/components/cards/NoticiaBreveCard'; 
+// Importación de modales (Asegúrate de que las rutas sean correctas en tu proyecto)
 import CrearPublicacionModal from './modals/CrearPublicacionModal'; 
 import EditarPublicacionModal from './modals/EditarPublicacionModal';
 
 // Estilos
 import '../../styles/Academia/GestionAcademia.css'; 
 
-// --- DATOS DE EJEMPLO ---
-const NOTICIAS_INICIALES = [
-  {
-    id: 1,
-    imagenSrc: "/logo.png",
-    altTexto: "Niño jugando",
-    titulo: "Hitos Clave del Desarrollo del Lenguaje",
-    bajada: "Identificar las etapas cruciales del habla y lenguaje puede ayudar a los padres a detectar a tiempo posibles retrasos.",
-    autor: "Equipo de Desarrollo",
-    fecha: "20.11.2025",
-    linkVerMas: "#",
-    etiquetas: ["lenguaje", "desarrollo"],
-  },
-  {
-    id: 2,
-    imagenSrc: "/logo.png",
-    altTexto: "Padre e hijo",
-    titulo: "Estrategias para el Manejo de Rabietas",
-    bajada: "Técnicas de disciplina positiva que promueven la inteligencia emocional y el manejo de frustraciones en preescolares.",
-    autor: "Psicología Infantil",
-    fecha: "18.11.2025",
-    linkVerMas: "#",
-    etiquetas: ["crianza", "emocional"],
-  },
-];
-
 export default function GestionAcademia() {
-  // Estados
-  const [noticias, setNoticias] = useState(NOTICIAS_INICIALES);
-  
+  // --- ESTADOS ---
+  const [guias, setGuias] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [busqueda, setBusqueda] = useState("");
+
   // Estados de Modales
-  const [isCreateModalOpen, setCreateModalOpen] = useState(false);
-  const [isEditModalOpen, setEditModalOpen] = useState(false);
-  const [publicacionAEditar, setPublicacionAEditar] = useState<any>(null);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [seleccionada, setSeleccionada] = useState<any>(null);
 
-  // --- FUNCIONES DE CONTROL ---
-
-  // 1. CREAR
-  const handleCreate = () => {
-    setCreateModalOpen(true);
-  };
-
-  const guardarNuevaPublicacion = (nuevaPublicacion: any) => {
-    setNoticias([nuevaPublicacion, ...noticias]); 
-    setCreateModalOpen(false);
-  };
-
-  // 2. EDITAR
-  const handleEdit = (id: number) => {
-    const publicacion = noticias.find(p => p.id === id);
-    if (publicacion) {
-      setPublicacionAEditar(publicacion);
-      setEditModalOpen(true);
+  // --- 1. CARGAR DATOS (Admin ve TODO: activos y ocultos) ---
+  const cargarGuias = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      // Usamos el flag ?admin=true para que la API no filtre los desactivados
+      const res = await fetch('/api/academia?admin=true');
+      
+      if (!res.ok) throw new Error('Error al conectar con el servidor');
+      
+      const data = await res.json();
+      // Manejamos si la API responde con un array o con un objeto {data: []}
+      const listaFinal = Array.isArray(data) ? data : (data.data || []);
+      setGuias(listaFinal);
+    } catch (e: any) {
+      console.error("Error al cargar:", e);
+      setError("No se pudo sincronizar la biblioteca de la academia.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const actualizarPublicacion = (publicacionActualizada: any) => {
-    setNoticias(prevNoticias => 
-      prevNoticias.map(p => (p.id === publicacionActualizada.id ? publicacionActualizada : p))
+  useEffect(() => {
+    cargarGuias();
+  }, []);
+
+  // --- 2. FILTRADO POR BÚSQUEDA ---
+  const guiasFiltradas = useMemo(() => {
+    return guias.filter(g => 
+      (g.titulo || "").toLowerCase().includes(busqueda.toLowerCase()) ||
+      (g.autor || "").toLowerCase().includes(busqueda.toLowerCase())
     );
-    setEditModalOpen(false);
-    setPublicacionAEditar(null);
-  };
+  }, [guias, busqueda]);
 
-  // 3. ELIMINAR
-  const handleDelete = (id: number) => {
-    if (confirm("¿Estás seguro de eliminar esta publicación? Esta acción no se puede deshacer.")) {
-        setNoticias(prev => prev.filter(item => item.id !== id));
+  // --- 3. ACCIONES (POST / PUT / SOFT-DELETE) ---
+
+  const handleSave = async (nueva: any) => {
+    const res = await fetch('/api/academia', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(nueva)
+    });
+    if (res.ok) {
+      await cargarGuias();
+      setIsCreateOpen(false);
     }
   };
+
+  const handleUpdate = async (editada: any) => {
+    try {
+      const res = await fetch(`/api/academia/${editada.id_guia}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editada)
+      });
+      if (res.ok) {
+        await cargarGuias();
+        setIsEditOpen(false);
+        setSeleccionada(null);
+      }
+    } catch (error) {
+      console.error("Error al actualizar:", error);
+    }
+  };
+
+  const handleToggleEstado = async (guia: any) => {
+    const nuevoEstado = !guia.activo;
+    const confirmacion = nuevoEstado 
+      ? "¿Deseas publicar esta guía? Será visible para todos." 
+      : "¿Deseas ocultar esta guía? Solo tú podrás verla.";
+
+    if (window.confirm(confirmacion)) {
+      try {
+        const res = await fetch(`/api/academia/${guia.id_guia}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...guia, activo: nuevoEstado })
+        });
+        if (res.ok) {
+          // Actualización local rápida para feedback visual
+          setGuias(prev => prev.map(g => g.id_guia === guia.id_guia ? { ...g, activo: nuevoEstado } : g));
+        }
+      } catch (error) {
+        console.error("Error al cambiar estado:", error);
+      }
+    }
+  };
+
+  // --- RENDERIZADO ---
+  if (loading) return (
+    <div className="admin-loading-full">
+      <Loader2 className="animate-spin" size={48} color="#0a3d62" />
+      <p>Organizando biblioteca médica...</p>
+    </div>
+  );
 
   return (
     <div className="admin-academia-container">
       
-      {/* --- HEADER DE GESTIÓN --- */}
-      <div className="admin-toolbar">
-        <div className="toolbar-info">
-            <h1 className="admin-title">Gestión de Academia Infantil</h1>
-            <p className="admin-subtitle">Administra las guías, consejos y novedades visibles para los padres.</p>
-        </div>
-        <div className="toolbar-actions">
-            <button className="btn-admin-create" onClick={handleCreate}>
-                <PlusCircle size={20} /> Nueva Publicación
-            </button>
-        </div>
-      </div>
-
-      {/* --- ESTADÍSTICAS RÁPIDAS --- */}
-      <div className="admin-stats-bar">
-        <div className="stat-item">
-            <FileText size={20} />
-            <span><strong>{noticias.length}</strong> Publicaciones Activas</span>
-        </div>
-      </div>
-
-      {/* --- LISTA DE CONTENIDO --- */}
-      <div className="admin-content-grid">
-        {noticias.length > 0 ? (
-          noticias.map(noticia => (
-            <div key={noticia.id} className="admin-card-wrapper">
-              
-              {/* Tarjeta Visual */}
-              <NoticiaBreveCard
-                  imagenSrc={noticia.imagenSrc || "/logo.png"}
-                  altTexto={noticia.altTexto}
-                  titulo={noticia.titulo}
-                  bajada={noticia.bajada}
-                  autor={noticia.autor}
-                  fecha={noticia.fecha}
-                  linkVerMas={noticia.linkVerMas}
-                  etiquetas={noticia.etiquetas}
-              />
-
-              {/* Controles de la Tarjeta */}
-              <div className="card-controls">
-                  <button 
-                      className="btn-control edit" 
-                      onClick={() => handleEdit(noticia.id)}
-                      title="Editar Publicación"
-                  >
-                      <Edit size={18} /> Editar
-                  </button>
-                  <button 
-                      className="btn-control delete" 
-                      onClick={() => handleDelete(noticia.id)}
-                      title="Eliminar Publicación"
-                  >
-                      <Trash2 size={18} /> Eliminar
-                  </button>
-              </div>
-
-            </div>
-          ))
-        ) : (
-          <div style={{textAlign: 'center', padding: '3rem', color: '#6B7280'}}>
-            No hay publicaciones aún. ¡Crea la primera!
+      {/* CABECERA */}
+      <header className="admin-header-main">
+        <div className="header-left">
+          <h1 className="admin-title">Panel de Academia Infantil</h1>
+          <div className="stats-pills">
+            <span className="pill">Total: {guias.length}</span>
+            <span className="pill online">Públicos: {guias.filter(g => g.activo).length}</span>
+            <span className="pill offline">Ocultos: {guias.filter(g => !g.activo).length}</span>
           </div>
-        )}
+        </div>
+        <button className="btn-add-main" onClick={() => setIsCreateOpen(true)}>
+          <PlusCircle size={20} /> Nueva Guía Educativa
+        </button>
+      </header>
+
+      {/* BARRA DE HERRAMIENTAS */}
+      <div className="admin-filters-bar">
+        <div className="search-box">
+          <Search size={18} />
+          <input 
+            type="text" 
+            placeholder="Buscar por título o autor..." 
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+          />
+        </div>
       </div>
 
-      {/* --- MODALES --- */}
+      {error && <div className="admin-error-alert"><AlertCircle size={20} /> {error}</div>}
+
+      {/* TABLA DE DATOS */}
+      <div className="table-responsive-container">
+        <table className="admin-data-table">
+          <thead>
+            <tr>
+              <th className="col-id"><Hash size={14}/> ID</th>
+              <th className="col-img">Portada</th>
+              <th className="col-info">Título y Resumen</th>
+              <th className="col-autor"><User size={14}/> Autor</th>
+              <th className="col-fecha"><Calendar size={14}/> Fecha</th>
+              <th className="col-estado">Estado</th>
+              <th className="col-actions">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {guiasFiltradas.length > 0 ? (
+              guiasFiltradas.map((guia) => (
+                <tr key={guia.id_guia} className={!guia.activo ? 'row-inactive' : ''}>
+                  <td className="text-center font-bold">{guia.id_guia}</td>
+                  <td>
+                    <img 
+                      src={(!guia.imagenSrc || guia.imagenSrc === "1") ? "/logo.png" : guia.imagenSrc} 
+                      alt="Miniatura" 
+                      className="table-img-thumb" 
+                    />
+                  </td>
+                  <td>
+                    <div className="cell-title">{guia.titulo || "Sin título"}</div>
+                    <div className="cell-subtitle">{guia.bajada || "Sin descripción corta registrada."}</div>
+                  </td>
+                  <td>{guia.autor || "Especialista"}</td>
+                  <td>{guia.fecha ? new Date(guia.fecha).toLocaleDateString() : "S/F"}</td>
+                  <td>
+                    <span className={`pill-status ${guia.activo ? 'active' : 'hidden'}`}>
+                      {guia.activo ? 'Público' : 'Oculto'}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="actions-flex">
+                      <button 
+                        className="btn-icon edit" 
+                        title="Editar"
+                        onClick={() => { setSeleccionada(guia); setIsEditOpen(true); }}
+                      >
+                        <Edit size={16} />
+                      </button>
+                      <button 
+                        className={`btn-icon toggle ${guia.activo ? 'to-hide' : 'to-show'}`} 
+                        title={guia.activo ? "Ocultar de la web" : "Publicar ahora"}
+                        onClick={() => handleToggleEstado(guia)}
+                      >
+                        {guia.activo ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={7} className="empty-table-msg">
+                  <Newspaper size={40} />
+                  <p>No se encontraron registros en la biblioteca.</p>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* MODALES */}
       <CrearPublicacionModal 
-        isOpen={isCreateModalOpen} 
-        onClose={() => setCreateModalOpen(false)} 
-        onSave={guardarNuevaPublicacion}
+        isOpen={isCreateOpen} 
+        onClose={() => setIsCreateOpen(false)} 
+        onSave={handleSave} 
       />
 
-      <EditarPublicacionModal 
-        isOpen={isEditModalOpen}
-        onClose={() => setEditModalOpen(false)}
-        onSave={actualizarPublicacion}
-        publicacion={publicacionAEditar}
-      />
+      {seleccionada && (
+        <EditarPublicacionModal 
+          isOpen={isEditOpen} 
+          onClose={() => { setIsEditOpen(false); setSeleccionada(null); }} 
+          onSave={handleUpdate} 
+          guia={seleccionada} 
+        />
+      )}
 
     </div>
   );

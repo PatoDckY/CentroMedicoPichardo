@@ -1,24 +1,14 @@
-// screens/admin/modals/EditarRolModal.tsx
 "use client";
 import React, { useState, useEffect } from 'react';
 import { X, Save, Shield } from 'lucide-react';
-// IMPORTAR EL NUEVO CSS
 import '../../styles/Usuarios/UsuarioModal.css';
-import { Usuario, RolUsuario } from './GestionUsuarios';
 
-interface EditarRolModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (id: number, nuevoRol: RolUsuario) => void;
-  usuario: Usuario | null;
-}
-
-export default function EditarRolModal({ isOpen, onClose, onSave, usuario }: EditarRolModalProps) {
-  const [rolSeleccionado, setRolSeleccionado] = useState<RolUsuario>('Cliente');
+export default function EditarRolModal({ isOpen, onClose, onSave, usuario, roles }: any) {
+  const [rolIdSeleccionado, setRolIdSeleccionado] = useState<number | string>("");
 
   useEffect(() => {
-    if (usuario) {
-      setRolSeleccionado(usuario.rol);
+    if (usuario && isOpen) {
+      setRolIdSeleccionado(usuario.rolId || "");
     }
   }, [usuario, isOpen]);
 
@@ -26,24 +16,20 @@ export default function EditarRolModal({ isOpen, onClose, onSave, usuario }: Edi
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(usuario.id, rolSeleccionado);
+    onSave(usuario.id, Number(rolIdSeleccionado));
   };
 
   return (
     <div className="usuario-modal-overlay" onClick={onClose}>
-      <div className="usuario-modal-container" onClick={(e) => e.stopPropagation()}>
-        
-        {/* Header */}
+      <div className="usuario-modal-container small" onClick={(e) => e.stopPropagation()}>
         <div className="usuario-modal-header">
           <h2 className="usuario-modal-title"><Shield size={20}/> Gestionar Permisos</h2>
           <button className="btn-close-usuario" onClick={onClose}><X size={22} /></button>
         </div>
 
-        {/* Formulario */}
         <form onSubmit={handleSubmit} className="usuario-modal-form">
-          
-          <div className="form-info-text">
-            Estás editando el rol de acceso para:
+          <div className="form-info-box">
+            <p>Estás editando el nivel de acceso para:</p>
             <strong>{usuario.nombre} {usuario.apellidoPaterno}</strong>
           </div>
             
@@ -51,25 +37,30 @@ export default function EditarRolModal({ isOpen, onClose, onSave, usuario }: Edi
             <label>Selecciona el nuevo Rol:</label>
             <select 
                 className="role-select-large"
-                value={rolSeleccionado} 
-                onChange={(e) => setRolSeleccionado(e.target.value as RolUsuario)}
+                value={rolIdSeleccionado} 
+                onChange={(e) => setRolIdSeleccionado(e.target.value)}
+                required
             >
-              <option value="Cliente">Cliente (Acceso básico)</option>
-              <option value="Medico">Médico (Gestión de citas propias)</option>
-              <option value="Admin">Administrador (Acceso total)</option>
+              <option value="" disabled>-- Selecciona un rol --</option>
+              {roles && roles.length > 0 ? (
+                roles.map((rol: any) => (
+                  <option key={rol.id} value={rol.id}>
+                    {rol.nombre}
+                  </option>
+                ))
+              ) : (
+                <option disabled>No hay roles en la base de datos...</option>
+              )}
             </select>
           </div>
 
+          <div className="usuario-modal-footer">
+              <button type="button" className="btn-usuario-cancel" onClick={onClose}>Cancelar</button>
+              <button type="submit" className="btn-usuario-save">
+                  <Save size={18}/> Guardar Cambios
+              </button>
+          </div>
         </form>
-
-        {/* Footer */}
-        <div className="usuario-modal-footer">
-            <button type="button" className="btn-usuario-cancel" onClick={onClose}>Cancelar</button>
-            <button type="submit" className="btn-usuario-save" onClick={handleSubmit}>
-                <Save size={18}/> Guardar Rol
-            </button>
-        </div>
-
       </div>
     </div>
   );

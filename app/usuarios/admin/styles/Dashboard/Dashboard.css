@@ -243,3 +243,102 @@
         transform: translateX(0);
     }
 }
+.dashboard-container {
+  background-color: #f8fafc;
+  min-height: 100vh;
+  padding-bottom: 4rem;
+}
+
+.dashboard-header {
+  background: linear-gradient(135deg, #0A3D62 0%, #1e293b 100%);
+  color: white;
+  padding: 4rem 2rem;
+  border-radius: 0 0 30px 30px;
+}
+
+.dashboard-header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.date-badge {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  margin: 0.5rem 0 1rem 0;
+  text-transform: capitalize;
+}
+
+.shortcuts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2rem;
+  max-width: 1200px;
+  margin: -3rem auto 0 auto;
+  padding: 0 1.5rem;
+}
+
+.shortcut-card {
+  background: white;
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid rgba(0,0,0,0.03);
+}
+
+.shortcut-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+}
+
+/* Colores Dinámicos */
+.shortcut-card.blue .icon-wrapper { color: #2563eb; background: #dbeafe; }
+.shortcut-card.green .icon-wrapper { color: #16a34a; background: #dcfce7; }
+.shortcut-card.orange .icon-wrapper { color: #ea580c; background: #ffedd5; }
+.shortcut-card.purple .icon-wrapper { color: #9333ea; background: #f3e8ff; }
+.shortcut-card.red .icon-wrapper { color: #dc2626; background: #fee2e2; }
+.shortcut-card.teal .icon-wrapper { color: #0d9488; background: #ccfbf1; }
+
+.icon-wrapper {
+  padding: 1rem;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shortcut-stat {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 0.3rem 0.6rem;
+  border-radius: 8px;
+}
+
+.shortcut-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #f1f5f9;
+  font-weight: 600;
+  color: #0A3D62;
+}
+
+.loading-grid-msg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 4rem;
+  color: #64748b;
+}

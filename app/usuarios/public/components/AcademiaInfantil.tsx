@@ -1,96 +1,133 @@
-// pages/AcademiaInfantil.tsx
 "use client";
-import React from 'react';
-import NoticiaBreveCard from './cards/NoticiaBreveCard'; 
-import BlogSidebarPediatria from '../components/SideBars/BlogSidebarPediatria'; 
-import { ArrowRightCircle, BookOpen } from 'lucide-react';
-import '../styles/AcademiaInfantil.css'; 
+import React, { useEffect, useState, useMemo } from "react";
+import NoticiaBreveCard from "./cards/NoticiaBreveCard";
+import { ArrowRightCircle, BookOpen, Search, Loader2, AlertCircle } from "lucide-react";
+import "../styles/AcademiaInfantil.css";
 
-// --- DATOS DE NOTICIAS DE EJEMPLO (Sin cambios) ---
-const NOTICIAS_ACADEMIA = [
-  // ... (datos de noticias) ...
-  {
-    id: 1,
-    imagenSrc: "/logo.png",
-    altTexto: "Niño jugando con bloques",
-    titulo: "Hitos Clave del Desarrollo del Lenguaje en los Primeros 3 Años",
-    bajada: "Identificar las etapas cruciales del habla y lenguaje puede ayudar a los padres a detectar a tiempo posibles retrasos.",
-    autor: "Equipo de Desarrollo",
-    fecha: "20.11.2025",
-    linkVerMas: "#",
-    etiquetas: ["lenguaje", "desarrollo", "psicomotor", "hitos"],
-  },
-  {
-    id: 2,
-    imagenSrc: "/logo.png",
-    altTexto: "Padre consolando a un niño",
-    titulo: "Estrategias Efectivas para el Manejo de Rabietas y Berrinches",
-    bajada: "Aprenda técnicas de disciplina positiva que promueven la inteligencia emocional y el manejo de frustraciones en preescolares.",
-    autor: "Psicología Infantil",
-    fecha: "18.11.2025",
-    linkVerMas: "#",
-    etiquetas: ["comportamiento", "crianza", "emocional", "limites"],
-  },
-];
+type GuiaAPI = {
+  id_guia: number;
+  titulo: string;
+  bajada: string | null;
+  autor: string | null;
+  fecha: string | null;
+  imagenSrc: string | null;
+  etiquetas: string | null;
+  activo: boolean;
+};
 
 export default function AcademiaInfantil() {
+  const [guias, setGuias] = useState<GuiaAPI[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [busqueda, setBusqueda] = useState("");
+
+  useEffect(() => {
+    const fetchGuias = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch("/api/academia");
+        if (!res.ok) throw new Error("Error al conectar con la API");
+        
+        const data = await res.json();
+        
+        // 🛠️ Basado en tu diagnóstico, recibimos un ARRAY directo
+        setGuias(Array.isArray(data) ? data : []);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchGuias();
+  }, []);
+
+  // Función segura para procesar etiquetas
+  const parseEtiquetas = (str: string | null) => {
+    if (!str || str.trim() === "") return [];
+    return str.split(',').map(t => t.trim()).filter(Boolean);
+  };
+
+  // Preparamos las noticias para las Cards
+  const noticiasPreparadas = useMemo(() => {
+    return guias.map(g => ({
+      id: g.id_guia,
+      imagenSrc: g.imagenSrc && g.imagenSrc !== "1" ? g.imagenSrc : "/logo.png",
+      titulo: g.titulo || "Guía sin título",
+      bajada: g.bajada || "Sin descripción disponible.",
+      autor: g.autor || "Especialista",
+      fecha: g.fecha ? new Date(g.fecha).toLocaleDateString('es-MX', { 
+        day: '2-digit', month: 'long', year: 'numeric' 
+      }) : "Reciente",
+      etiquetas: parseEtiquetas(g.etiquetas)
+    }));
+  }, [guias]);
+
+  // Filtrado por buscador
+  const noticiasFiltradas = useMemo(() => {
+    return noticiasPreparadas.filter(n => 
+      n.titulo.toLowerCase().includes(busqueda.toLowerCase()) ||
+      n.autor.toLowerCase().includes(busqueda.toLowerCase())
+    );
+  }, [noticiasPreparadas, busqueda]);
+
   return (
     <div className="academia-page-container">
-      
-      {/* --- SECCIÓN PRINCIPAL DE HERO BANNER (Mensaje Destacado) --- */}
       <div className="academia-hero-banner">
         <div className="hero-content">
-          {/* TÍTULO INCENTIVADOR */}
-          <h1 className="hero-title">
-            Tu aliado de confianza en la aventura de la paternidad.
-          </h1>
-          {/* SUBTÍTULO Y LLAMADA A LA ACCIÓN */}
-          <p className="hero-subtitle">
-            Hemos diseñado esta sección como una extensión del cuidado profesional que ofrecemos. Aquí encontrarás recursos, consejos y guías prácticas, además de acceso a cursos y talleres especializados para promover el desarrollo óptimo y seguro de tus hijos. 
-          </p>
-          <p className="hero-subtitle">
-            ¡Empieza hoy a nutrir tu rol como padre!
-          </p>
+          <h1 className="hero-title">Tu aliado de confianza en la paternidad.</h1>
+          <div className="main-search-bar">
+            <Search className="search-icon" size={20} />
+            <input
+              type="text"
+              placeholder="Buscar guías o autores..."
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+            />
+          </div>
         </div>
-        
-        {/* Botón de Acción Principal y Llamativo */}
         <div className="academia-cta-wrapper">
           <a href="/usuarios/public/screens/CatalogoCursos" className="btn-cursos-disponibles">
-            <BookOpen size={24} />
-            Cursos & Talleres Disponibles
-            <ArrowRightCircle size={20} />
+            <BookOpen size={24} /> Ver Cursos <ArrowRightCircle size={20} />
           </a>
         </div>
       </div>
 
-      {/* --- LAYOUT DE CONTENIDO Y SIDEBAR --- */}
       <div className="academia-layout-grid">
-        
-        {/* Columna Principal: Información Relevante Constante */}
         <div className="academia-content-area">
-          <h2 className="content-section-title">Guías Prácticas y Novedades</h2>
-          
+          <h2 className="content-section-title">Biblioteca de Guías</h2>
+
+          {loading && (
+            <div className="loading-state">
+              <Loader2 className="animate-spin" size={32} />
+              <p>Cargando información...</p>
+            </div>
+          )}
+
+          {error && (
+            <div className="error-message-box">
+              <AlertCircle size={20} /> {error}
+            </div>
+          )}
+
           <div className="publicaciones-list">
-            {NOTICIAS_ACADEMIA.map(noticia => (
-              <NoticiaBreveCard
+            {!loading && noticiasFiltradas.length === 0 && (
+              <p className="empty-message">No se encontraron guías disponibles.</p>
+            )}
+            
+            {noticiasFiltradas.map((noticia) => (
+              <NoticiaBreveCard 
                 key={noticia.id}
                 imagenSrc={noticia.imagenSrc}
-                altTexto={noticia.altTexto}
+                altTexto={noticia.titulo}
                 titulo={noticia.titulo}
                 bajada={noticia.bajada}
                 autor={noticia.autor}
                 fecha={noticia.fecha}
-                linkVerMas={noticia.linkVerMas}
+                linkVerMas={`/academia/${noticia.id}`}
                 etiquetas={noticia.etiquetas}
               />
             ))}
-            <NoticiaBreveCard key={3} imagenSrc="/logo.png" altTexto="Alimentación" titulo="Introducción de Sólidos: El Método BLW" bajada="Descubre el método Baby-Led Weaning, una aproximación donde el bebé guía su propia alimentación." autor="Nutrición" fecha="05.11.2025" linkVerMas="#" etiquetas={["nutricion", "BLW", "alimentacion"]} />
           </div>
-        </div>
-
-        {/* Barra Lateral: Categorías y Guías Rápidas */}
-        <div className="academia-sidebar-area">
-          <BlogSidebarPediatria />
         </div>
       </div>
     </div>

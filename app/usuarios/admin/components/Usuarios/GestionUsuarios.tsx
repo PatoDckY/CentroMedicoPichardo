@@ -1,180 +1,178 @@
-// screens/admin/GestionUsuarios.tsx
 "use client";
-import React, { useState, useMemo } from 'react';
-import { Search, Filter, Users, ShieldAlert } from 'lucide-react';
-import UsuarioCard from './UsuarioCard'; // Componente nuevo
-import EditarRolModal from './EditarRolModal'; // Modal específico
-import '../../styles/Usuarios/GestionUsuarios.css'; // CSS Nuevo
-
-// --- TIPO DE DATOS ---
-export type RolUsuario = 'Cliente' | 'Admin' | 'Medico';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Search, Loader2, Hash, UserCog, Mail, ShieldCheck, ShieldAlert, Phone, AlertCircle } from 'lucide-react';
+import EditarRolModal from './EditarRolModal';
+import '../../styles/Usuarios/GestionUsuarios.css';
 
 export type Usuario = {
   id: number;
   nombre: string;
   apellidoPaterno: string;
-  apellidoMaterno: string;
-  genero: string;
-  telefono: string;
   correo: string;
-  edad: number;
-  rol: RolUsuario;
-  imagenSrc?: string; // Opcional, para avatar
+  telefono: string;
+  rolId: number;
+  rolNombre: string;
 };
 
-// --- DATOS SIMULADOS ---
-const USUARIOS_INICIALES: Usuario[] = [
-  {
-    id: 1,
-    nombre: "Juan",
-    apellidoPaterno: "Pérez",
-    apellidoMaterno: "López",
-    genero: "Masculino",
-    telefono: "7711234567",
-    correo: "juan.perez@email.com",
-    edad: 34,
-    rol: "Cliente",
-  },
-  {
-    id: 2,
-    nombre: "María",
-    apellidoPaterno: "González",
-    apellidoMaterno: "Reyes",
-    genero: "Femenino",
-    telefono: "5544332211",
-    correo: "admin@cmpichardo.com",
-    edad: 29,
-    rol: "Admin",
-  },
-  {
-    id: 3,
-    nombre: "Carlos",
-    apellidoPaterno: "Ruiz",
-    apellidoMaterno: "Sánchez",
-    genero: "Masculino",
-    telefono: "7719876543",
-    correo: "doc.carlos@email.com",
-    edad: 45,
-    rol: "Medico",
-  },
-];
-
 export default function GestionUsuarios() {
-  const [usuarios, setUsuarios] = useState<Usuario[]>(USUARIOS_INICIALES);
+  const [data, setData] = useState<{ usuarios: Usuario[], roles: any[] }>({ 
+    usuarios: [], 
+    roles: [] 
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [busqueda, setBusqueda] = useState("");
-  const [filtroRol, setFiltroRol] = useState<string>("Todos");
   
-  // Estados Modal
   const [isEditModalOpen, setEditModalOpen] = useState(false);
   const [usuarioAEditar, setUsuarioAEditar] = useState<Usuario | null>(null);
 
-  // --- FILTRADO ---
-  const usuariosFiltrados = useMemo(() => {
-    return usuarios.filter(usuario => {
-      const nombreCompleto = `${usuario.nombre} ${usuario.apellidoPaterno} ${usuario.apellidoMaterno}`.toLowerCase();
-      const coincideTexto = nombreCompleto.includes(busqueda.toLowerCase()) || 
-                            usuario.correo.toLowerCase().includes(busqueda.toLowerCase());
+  const cargarDatos = async () => {
+    try {
+      setLoading(true);
+      setError(null);
       
-      const coincideRol = filtroRol === "Todos" || usuario.rol === filtroRol;
+      // 🚀 Peticiones en paralelo para mayor velocidad
+      const [resUsuarios, resRoles] = await Promise.all([
+        fetch('/api/usuarios'),
+        fetch('/api/roles')
+      ]);
 
-      return coincideTexto && coincideRol;
-    });
-  }, [busqueda, filtroRol, usuarios]);
+      if (!resUsuarios.ok || !resRoles.ok) throw new Error("Error al sincronizar con el servidor");
 
-  // --- FUNCIONES ---
-  const handleEditClick = (usuario: Usuario) => {
-    setUsuarioAEditar(usuario);
-    setEditModalOpen(true);
+      const listaUsuarios = await resUsuarios.json();
+      const listaRoles = await resRoles.json();
+
+      setData({
+        usuarios: Array.isArray(listaUsuarios) ? listaUsuarios : [],
+        roles: Array.isArray(listaRoles) ? listaRoles : []
+      });
+
+    } catch (err: any) {
+      console.error("🔥 Error:", err.message);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const guardarCambioRol = (id: number, nuevoRol: RolUsuario) => {
-    setUsuarios(prev => prev.map(u => u.id === id ? { ...u, rol: nuevoRol } : u));
-    setEditModalOpen(false);
-    setUsuarioAEditar(null);
+  useEffect(() => { 
+    cargarDatos(); 
+  }, []);
+
+  const usuariosFiltrados = useMemo(() => {
+    const lista = data.usuarios || [];
+    return lista.filter(u => 
+      `${u.nombre} ${u.correo} ${u.apellidoPaterno}`.toLowerCase().includes(busqueda.toLowerCase())
+    );
+  }, [data.usuarios, busqueda]);
+
+  const handleSaveRol = async (id: number, nuevoRolId: number) => {
+    try {
+      const res = await fetch(`/api/usuarios/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rolId: nuevoRolId })
+      });
+
+      if (res.ok) {
+        await cargarDatos();
+        setEditModalOpen(false);
+      }
+    } catch (err) {
+      console.error("Error al actualizar:", err);
+    }
   };
+
+  if (loading) return (
+    <div className="admin-loading-full" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '5rem' }}>
+      <Loader2 className="animate-spin" size={48} color="#0A3D62" />
+      <p style={{ marginTop: '1rem', color: '#64748B' }}>Sincronizando base de datos...</p>
+    </div>
+  );
 
   return (
     <div className="admin-usuarios-container">
-      
-      {/* --- HEADER --- */}
-      <header className="admin-usuarios-header">
-        <div className="header-background"></div>
-        <div className="header-content">
-          <h1 className="header-title">Gestión de Usuarios</h1>
-          <p className="header-subtitle">Administra los roles y permisos de acceso a la plataforma.</p>
+      <header className="admin-header-main">
+        <div className="header-left">
+          <h1>Control de Accesos</h1>
+          <div className="stats-badges">
+            <span className="badge-stat">Registrados: {data.usuarios.length}</span>
+          </div>
         </div>
       </header>
 
-      {/* --- BARRA DE HERRAMIENTAS (Sin botón Crear) --- */}
-      <div className="admin-tools-wrapper">
-        <div className="admin-tools-card">
-          
-          <div className="search-section">
-            <div className="search-input-wrapper">
-              <Search size={20} className="search-icon" />
-              <input 
-                type="text" 
-                placeholder="Buscar por nombre o correo..." 
-                value={busqueda}
-                onChange={(e) => setBusqueda(e.target.value)}
-              />
-            </div>
-            
-            <div className="filters-group">
-               <span className="filter-label"><Filter size={16}/> Rol:</span>
-               <select 
-                  value={filtroRol} 
-                  onChange={(e) => setFiltroRol(e.target.value)}
-                  className="filter-select"
-                >
-                  <option value="Todos">Todos</option>
-                  <option value="Cliente">Cliente</option>
-                  <option value="Admin">Administrador</option>
-                  <option value="Medico">Médico</option>
-               </select>
-            </div>
-          </div>
-
-          <div className="actions-section">
-            {/* Solo mostramos estadísticas, no hay botón crear */}
-            <div className="stats-badge">
-                <Users size={16} /> 
-                <span>{usuarios.length} Usuarios</span>
-            </div>
-          </div>
-
+      <div className="admin-filters-bar">
+        <div className="search-box">
+          <Search size={18} />
+          <input 
+            placeholder="Buscar por nombre o correo..." 
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+          />
         </div>
       </div>
 
-      {/* --- GRID DE USUARIOS --- */}
-      <main className="admin-usuarios-content">
-        {usuariosFiltrados.length > 0 ? (
-          <div className="admin-usuarios-grid">
-            {usuariosFiltrados.map((usuario) => (
-              <UsuarioCard 
-                key={usuario.id}
-                usuario={usuario}
-                onEdit={() => handleEditClick(usuario)}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="empty-state">
-            <ShieldAlert size={48} className="empty-icon" />
-            <h3>No se encontraron usuarios</h3>
-            <p>Intenta con otros términos de búsqueda.</p>
-          </div>
-        )}
-      </main>
+      {error && (
+        <div style={{ color: 'red', padding: '1rem', background: '#fee2e2', borderRadius: '8px', marginBottom: '1rem' }}>
+          <AlertCircle size={18} style={{ display: 'inline', marginRight: '8px' }}/>
+          Error: {error}
+        </div>
+      )}
 
-      {/* --- MODAL EDICIÓN DE ROL --- */}
+      <div className="table-responsive-container">
+        <table className="admin-data-table">
+          <thead>
+            <tr>
+              <th style={{ width: '60px' }}><Hash size={14}/> ID</th>
+              <th>Nombre Completo</th>
+              <th>Contacto</th>
+              <th>Rol de Sistema</th>
+              <th style={{ width: '100px' }}>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {usuariosFiltrados.length > 0 ? (
+              usuariosFiltrados.map((u) => (
+                <tr key={u.id}>
+                  <td className="text-center font-bold">{u.id}</td>
+                  <td>
+                    <div className="cell-title">{u.nombre} {u.apellidoPaterno}</div>
+                    <div className="cell-subtitle"><Mail size={12}/> {u.correo}</div>
+                  </td>
+                  <td><div className="cell-subtitle"><Phone size={12}/> {u.telefono || 'Sin teléfono'}</div></td>
+                  <td>
+                    <span className={`pill-rol ${(u.rolNombre || 'Sin asignar').toLowerCase()}`}>
+                      {u.rolNombre === 'Admin' ? <ShieldAlert size={12}/> : <ShieldCheck size={12}/>}
+                      {u.rolNombre || 'Sin asignar'}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="actions-flex">
+                      <button className="btn-icon edit" onClick={() => { setUsuarioAEditar(u); setEditModalOpen(true); }}>
+                        <UserCog size={18} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={5} style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
+                  No hay usuarios que coincidan con la búsqueda.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
       <EditarRolModal
         isOpen={isEditModalOpen}
         onClose={() => setEditModalOpen(false)}
-        onSave={guardarCambioRol}
         usuario={usuarioAEditar}
+        roles={data.roles}
+        onSave={handleSaveRol}
       />
-
     </div>
   );
 }

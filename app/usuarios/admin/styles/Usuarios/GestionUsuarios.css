@@ -1,232 +1,209 @@
-/* styles/admin/GestionUsuarios.css */
-
+/* --- VARIABLES --- */
 :root {
     --adm-azul: #0A3D62;
-    --adm-blanco: #FFFFFF;
+    --adm-azul-claro: #E0F2FE;
     --adm-fondo: #F8FAFC;
     --adm-borde: #E2E8F0;
-    --adm-texto: #334155;
-    --adm-rojo: #EF4444;
-    --adm-amarillo: #FFC300;
+    --adm-texto: #1E293B;
+    --adm-texto-muted: #64748B;
+    --adm-blanco: #FFFFFF;
+    --adm-success: #10B981;
+    --adm-danger: #EF4444;
 }
 
 .admin-usuarios-container {
     background-color: var(--adm-fondo);
     min-height: 100vh;
-    font-family: 'Inter', system-ui, sans-serif;
-    padding-bottom: 6rem;
+    padding: 2.5rem;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 /* --- HEADER --- */
-.admin-usuarios-header {
-    position: relative;
-    height: 240px;
-    background-color: var(--adm-azul);
+.admin-header-main {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    color: var(--adm-blanco);
-    padding-bottom: 2rem;
-}
-
-.header-background {
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: linear-gradient(145deg, #0F172A 0%, #0A3D62 100%);
-    opacity: 0.95;
-}
-
-.header-content {
-    position: relative;
-    z-index: 2;
-    margin-top: -20px;
-}
-
-.header-title {
-    font-size: 2.5rem;
-    font-weight: 800;
-    margin-bottom: 0.8rem;
-    color: #FFFFFF; 
-}
-
-.header-subtitle {
-    font-size: 1.1rem;
-    opacity: 0.9;
-    font-weight: 300;
-    color: #F1F5F9;
-}
-
-/* --- TOOLS BAR (Buscador y Filtros) --- */
-.admin-tools-wrapper {
-    margin-top: -50px;
-    position: relative;
-    z-index: 10;
-    padding: 0 20px;
-    display: flex;
-    justify-content: center;
-}
-
-.admin-tools-card {
-    background-color: var(--adm-blanco);
-    width: 100%;
-    max-width: 1100px;
-    border-radius: 16px;
-    padding: 1.5rem 2rem;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-    display: flex;
-    flex-wrap: wrap;
-    gap: 30px; /* Espacio generoso */
     justify-content: space-between;
     align-items: center;
-    border: 1px solid rgba(0,0,0,0.03);
+    margin-bottom: 2rem;
+    background: var(--adm-blanco);
+    padding: 1.5rem 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
-/* Sección de Búsqueda */
-.search-section {
+.admin-header-main h1 {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--adm-azul);
+    margin: 0;
+}
+
+.badge-stat {
+    display: inline-block;
+    background: var(--adm-azul-claro);
+    color: var(--adm-azul);
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+/* --- BARRA DE FILTROS --- */
+.admin-filters-bar {
+    margin-bottom: 1.5rem;
+}
+
+.search-box {
     display: flex;
     align-items: center;
-    gap: 20px;
-    flex: 1;
-    min-width: 300px;
-    flex-wrap: wrap; /* Permite que los elementos bajen si no caben */
-}
-
-.search-input-wrapper {
-    position: relative;
-    flex: 1 1 300px;
-    max-width: 450px; /* Límite para que no sea gigante */
-}
-
-.search-icon {
-    position: absolute;
-    left: 14px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #94A3B8;
-}
-
-.search-input-wrapper input {
-    width: 80%;
-    padding: 0.8rem 1rem 0.8rem 2.8rem;
+    background: var(--adm-blanco);
     border: 1px solid var(--adm-borde);
     border-radius: 10px;
-    font-size: 0.9rem;
-    outline: none;
-    transition: all 0.2s;
-    background-color: #F8FAFC;
+    padding: 0.75rem 1.25rem;
+    width: 100%;
+    max-width: 450px;
+    transition: all 0.2s ease;
 }
 
-.search-input-wrapper input:focus {
-    background-color: #fff;
+.search-box:focus-within {
     border-color: var(--adm-azul);
     box-shadow: 0 0 0 3px rgba(10, 61, 98, 0.1);
 }
 
-/* Grupo de Filtros */
-.filters-group {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-shrink: 0;
-}
-
-.filter-label {
-    font-weight: 600;
-    color: #64748B;
-    font-size: 0.9rem;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.filter-select {
-    padding: 0.7rem 2rem 0.7rem 1rem;
-    border: 1px solid var(--adm-borde);
-    border-radius: 10px;
-    background-color: white;
-    color: var(--adm-texto);
-    font-size: 0.9rem;
-    cursor: pointer;
+.search-box input {
+    border: none;
     outline: none;
-    min-width: 140px;
+    width: 100%;
+    margin-left: 0.75rem;
+    font-size: 0.95rem;
+    color: var(--adm-texto);
 }
 
-/* Sección Derecha (Estadísticas) */
-.actions-section {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
+/* --- TABLA --- */
+.table-responsive-container {
+    background: var(--adm-blanco);
+    border-radius: 12px;
+    border: 1px solid var(--adm-borde);
+    overflow: hidden;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04);
 }
 
-.stats-badge {
+.admin-data-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.admin-data-table th {
+    background: #F8FAFC;
+    padding: 1.25rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--adm-texto-muted);
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid var(--adm-borde);
+}
+
+.admin-data-table td {
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--adm-borde);
+    vertical-align: middle;
+}
+
+.admin-data-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* --- CELDAS --- */
+.cell-title {
+    font-weight: 700;
+    color: var(--adm-texto);
+    font-size: 1rem;
+}
+
+.cell-subtitle {
     display: flex;
     align-items: center;
-    gap: 8px;
-    background-color: #EFF6FF;
-    padding: 0.6rem 1.2rem;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--adm-texto-muted);
+    margin-top: 0.25rem;
+}
+
+/* --- BADGES DE ROL --- */
+.pill-rol {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
     border-radius: 30px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--adm-azul);
-    border: 1px solid #DBEAFE;
-    white-space: nowrap;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: capitalize;
 }
 
-/* --- GRID DE USUARIOS --- */
-.admin-usuarios-content {
-    max-width: 1200px;
-    margin: 4rem auto; /* Espacio superior para que no se pegue a la barra */
-    padding: 0 20px;
+/* Estilo para Admin */
+.pill-rol.admin {
+    background-color: #FEE2E2;
+    color: #991B1B;
 }
 
-.admin-usuarios-grid {
-    display: grid;
-    /* Tarjetas de ancho fijo y centradas */
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 30px;
+/* Estilo para Medico/Otros */
+.pill-rol.medico {
+    background-color: #DBEAFE;
+    color: #1E40AF;
+}
+
+/* Estilo por defecto */
+.pill-rol.cliente, .pill-rol.sin {
+    background-color: #F1F5F9;
+    color: #475569;
+}
+
+/* --- ACCIONES --- */
+.actions-flex {
+    display: flex;
     justify-content: center;
 }
 
-.empty-state {
-    text-align: center;
-    padding: 5rem;
-    color: #94A3B8;
-    font-size: 1.1rem;
-    border: 2px dashed var(--adm-borde);
-    border-radius: 12px;
-    background-color: white;
+.btn-icon {
+    background: var(--adm-blanco);
+    border: 1px solid var(--adm-borde);
+    padding: 0.6rem;
+    border-radius: 8px;
+    color: var(--adm-texto-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
 }
 
-.empty-icon {
-    margin-bottom: 1rem;
-    opacity: 0.5;
+.btn-icon:hover {
+    background: var(--adm-azul);
+    color: var(--adm-blanco);
+    border-color: var(--adm-azul);
+    transform: translateY(-2px);
 }
 
-/* --- RESPONSIVE --- */
-@media (max-width: 900px) {
-    .admin-tools-card {
+/* --- LOADING STATE --- */
+.admin-loading-full {
+    height: 60vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: var(--adm-azul);
+}
+
+@media (max-width: 768px) {
+    .admin-header-main {
         flex-direction: column;
-        align-items: stretch;
-        gap: 20px;
+        align-items: flex-start;
+        gap: 1rem;
     }
     
-    .search-section {
-        width: 100%;
-        flex-wrap: wrap;
-    }
-    
-    .search-input-wrapper {
+    .search-box {
         max-width: 100%;
-        min-width: 100%;
-    }
-    
-    .filters-group {
-        width: 100%;
-        justify-content: space-between;
-    }
-    
-    .actions-section {
-        justify-content: flex-end;
     }
 }
