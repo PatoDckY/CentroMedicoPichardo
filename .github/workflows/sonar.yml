@@ -3,7 +3,7 @@ name: Seguridad SAST - Centro Medico Pichardo
 on:
   push:
     branches:
-      - main # Se activa cada vez que subes algo a la rama main
+      - master # Se activa cada vez que subes algo a la rama main
   pull_request:
     types: [opened, synchronize, reopened]
 
@@ -22,6 +22,5 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: https://zaid-nonpossessed-sublimely.ngrok-free.dev # Aquí hay un detalle importante
 
-# Intento de activación de pipeline
 # Intento de activación de pipeline
 # Intento de activación de pipeline
