@@ -21,3 +21,7 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: https://zaid-nonpossessed-sublimely.ngrok-free.dev # Aquí hay un detalle importante
+
+# Intento de activación de pipeline
+# Intento de activación de pipeline
+# Intento de activación de pipeline
